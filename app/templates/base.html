@@ -1,0 +1,153 @@
+
+{% set is_admin = (current_user.is_authenticated and current_user.role in ['admin','superadmin']) %}
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ APP_NAME }}</title>
+  <link rel="icon" href="{{ APP_ICON_URL }}">
+  <script>
+    (function () {
+      try {
+        const saved = localStorage.getItem('theme');
+        const system = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        const theme = saved || system;
+        document.documentElement.setAttribute('data-bs-theme', theme);
+      } catch (e) { /* no-op */ }
+    })();
+  </script>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+  <link href="https://cdn.datatables.net/2.0.8/css/dataTables.bootstrap5.css" rel="stylesheet">
+  <style>
+    .brand { display:flex; align-items:center; gap:.5rem; font-weight:600; }
+    .brand img { width:28px; height:28px; }
+    .card-shadow { box-shadow: 0 10px 20px rgba(0,0,0,.05); border-radius:1rem; }
+  @media (prefers-color-scheme: dark) {
+    :root[data-bs-theme="dark"] .card-shadow { box-shadow: 0 10px 20px rgba(0,0,0,.35); }
+  }
+  </style>
+</head>
+<body class="bg-body">
+<nav class="navbar navbar-expand-lg bg-body border-bottom sticky-top">
+  <div class="container">
+    <a class="navbar-brand brand" href="{{ url_for('main.index') }}">
+      <img src="{{ APP_ICON_URL }}" alt="icon"> {{ APP_NAME }}
+    </a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#nav">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="nav">
+      <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+        <li class="nav-item"><a class="nav-link" href="{{ url_for('main.index') }}">Inicio</a></li>
+        {% if current_user.is_authenticated %}
+          <li class="nav-item"><a class="nav-link" href="{{ url_for('services.my_services') }}">Mis servicios</a></li>
+          <li class="nav-item"><a class="nav-link" href="{{ url_for('services.create_service') }}">Crear servicio</a></li>
+        {% endif %}
+        {% if is_admin %}
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">Administración</a>
+            <ul class="dropdown-menu">
+              <li><a class="dropdown-item" href="{{ url_for('admin.dashboard') }}">Dashboard</a></li>
+              <li><a class="dropdown-item" href="{{ url_for('admin.admin_services') }}">Servicios</a></li>
+              <li><a class="dropdown-item" href="{{ url_for('admin.users') }}">Usuarios</a></li>
+              {% if current_user.role == 'superadmin' %}
+                <li><a class="dropdown-item" href="{{ url_for('admin.logs') }}">Logs</a></li>
+              {% endif %}
+            </ul>
+          </li>
+        {% endif %}
+      </ul>
+      <ul class="navbar-nav">
+        {% if current_user.is_authenticated %}
+          <li class="nav-item"><a class="nav-link" href="{{ url_for('auth.profile') }}"><i class="bi bi-person-circle"></i> {{ current_user.name }}</a></li>
+          <li class="nav-item"><a class="nav-link" href="{{ url_for('auth.logout') }}">Salir</a></li>
+        {% else %}
+          <li class="nav-item"><a class="nav-link" href="{{ url_for('auth.login') }}">Ingresar</a></li>
+          <li class="nav-item"><a class="nav-link" href="{{ url_for('auth.register') }}">Registro</a></li>
+        {% endif %}
+        <li class="nav-item me-2">
+  <button class="btn btn-sm btn-outline-secondary" id="themeToggle" type="button" aria-label="Cambiar tema">
+    <i class="bi bi-moon-stars" id="icon-moon"></i>
+    <i class="bi bi-brightness-high" id="icon-sun" style="display:none"></i>
+  </button>
+</li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<main class="container py-4">
+  {% with messages = get_flashed_messages(with_categories=True) %}
+    {% if messages %}
+      <div class="position-fixed top-0 end-0 p-3" style="z-index: 1080">
+        {% for category, message in messages %}
+          <div class="toast align-items-center text-bg-{{ 'danger' if category=='danger' else category }} border-0 show my-2">
+            <div class="d-flex">
+              <div class="toast-body">{{ message }}</div>
+              <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+  {% endwith %}
+  {% block content %}{% endblock %}
+</main>
+
+<footer class="text-center py-4 small text-body-secondary">
+  Hecho con Flask, Bootstrap, DataTables y SweetAlert2.
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+(function(){
+  const root = document.documentElement;
+  const btn = document.getElementById('themeToggle');
+  const iconMoon = document.getElementById('icon-moon');
+  const iconSun = document.getElementById('icon-sun');
+
+  function syncIcons() {
+    const t = root.getAttribute('data-bs-theme') || 'light';
+    if (t === 'dark') {
+      iconMoon && (iconMoon.style.display = 'inline-block');
+      iconSun && (iconSun.style.display = 'none');
+    } else {
+      iconMoon && (iconMoon.style.display = 'none');
+      iconSun && (iconSun.style.display = 'inline-block');
+    }
+  }
+
+  // Inicial
+  syncIcons();
+
+  // Toggle manual
+  btn && btn.addEventListener('click', () => {
+    const current = root.getAttribute('data-bs-theme') === 'dark' ? 'light' : 'dark';
+    root.setAttribute('data-bs-theme', current);
+    try { localStorage.setItem('theme', current); } catch(e) {}
+    syncIcons();
+  });
+
+  // Si el usuario NO ha elegido tema, sincronizar con el sistema
+  try {
+    const mq = window.matchMedia('(prefers-color-scheme: dark)');
+    mq.addEventListener('change', (e) => {
+      if (!localStorage.getItem('theme')) {
+        const t = e.matches ? 'dark' : 'light';
+        root.setAttribute('data-bs-theme', t);
+        syncIcons();
+      }
+    });
+  } catch(e) {}
+})();
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="https://cdn.datatables.net/2.0.8/js/dataTables.js"></script>
+<script src="https://cdn.datatables.net/2.0.8/js/dataTables.bootstrap5.js"></script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

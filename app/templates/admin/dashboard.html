@@ -1,0 +1,10 @@
+
+{% extends "base.html" %}
+{% block content %}
+<div class="row g-3">
+  <div class="col-md-3"><div class="card card-shadow p-3 text-center"><div class="h6 text-muted">Servicios</div><div class="display-6">{{ total_services }}</div></div></div>
+  <div class="col-md-3"><div class="card card-shadow p-3 text-center"><div class="h6 text-muted">Pendientes</div><div class="display-6">{{ pending }}</div></div></div>
+  <div class="col-md-3"><div class="card card-shadow p-3 text-center"><div class="h6 text-muted">Aprobados</div><div class="display-6">{{ approved }}</div></div></div>
+  <div class="col-md-3"><div class="card card-shadow p-3 text-center"><div class="h6 text-muted">Usuarios</div><div class="display-6">{{ users }}</div></div></div>
+</div>
+{% endblock %}

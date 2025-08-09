@@ -1,0 +1,41 @@
+
+{% extends "base.html" %}
+{% block content %}
+<div class="card card-shadow p-4">
+  <h1 class="h4">Mis servicios</h1>
+  <div class="table-responsive">
+    <table class="table" id="mine">
+      <thead><tr><th>Título</th><th>Estado</th><th>Activo</th><th>Acciones</th></tr></thead>
+      <tbody>
+        {% for s in items %}
+        <tr>
+          <td>{{ s.title }}</td>
+          <td><span class="badge text-bg-{% if s.status=='approved' %}success{% elif s.status=='pending' %}warning{% else %}danger{% endif %}">{{ s.status }}</span></td>
+          <td>{{ 'Sí' if s.is_active else 'No' }}</td>
+          <td>
+            <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('services.edit_service', service_id=s.id) }}"><i class="bi bi-pencil"></i></a>
+            <a class="btn btn-sm btn-outline-primary" href="{{ url_for('services.detail', service_id=s.id) }}"><i class="bi bi-eye"></i></a>
+            <form method="post" action="{{ url_for('services.soft_delete', service_id=s.id) }}" class="d-inline" onsubmit="return confirmDelete(this)">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+            </form>
+
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+  new DataTable('#mine');
+  function confirmDelete(form){
+    event.preventDefault();
+    Swal.fire({title:'¿Eliminar?', text:'Esto es un borrado lógico.', icon:'warning', showCancelButton:true})
+      .then(r=>{ if(r.isConfirmed){ form.submit(); }});
+    return false;
+  }
+</script>
+{% endblock %}

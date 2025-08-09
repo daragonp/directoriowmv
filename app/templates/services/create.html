@@ -1,0 +1,25 @@
+
+{% extends "base.html" %}
+{% block content %}
+<div class="row">
+  <div class="col-md-8 mx-auto">
+    <div class="card card-shadow p-4">
+      <h1 class="h4">Crear servicio</h1>
+      <form method="post">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="row g-3">
+          <div class="col-md-6"><label class="form-label">Nombre de la persona</label><input name="person_name" class="form-control" required></div>
+          <div class="col-md-6"><label class="form-label">Nombre del negocio</label><input name="business_name" class="form-control"></div>
+          <div class="col-md-12"><label class="form-label">Título del producto/servicio</label><input name="title" class="form-control" required></div>
+          <div class="col-12"><label class="form-label">Descripción</label><textarea name="description" class="form-control" rows="4" required></textarea></div>
+          <div class="col-md-4"><label class="form-label">Email</label><input type="email" name="email" class="form-control"></div>
+          <div class="col-md-4"><label class="form-label">Teléfono</label><input name="phone" class="form-control"></div>
+          <div class="col-md-4"><label class="form-label">Dirección</label><input name="address" class="form-control"></div>
+          <div class="col-md-12"><label class="form-label">Enlace a red social</label><input name="social_link" class="form-control"></div>
+        </div>
+        <button class="btn btn-primary mt-3">Guardar</button>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

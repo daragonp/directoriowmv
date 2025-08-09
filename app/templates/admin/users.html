@@ -1,0 +1,34 @@
+
+{% extends "base.html" %}
+{% block content %}
+<div class="card card-shadow p-4">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="h4 m-0">Usuarios</h1>
+    <a href="{{ url_for('admin.create_user') }}" class="btn btn-primary btn-sm">Crear usuario</a>
+  </div>
+  <div class="table-responsive">
+    <table class="table" id="users">
+      <thead><tr><th>ID</th><th>Nombre</th><th>Email</th><th>Rol</th><th>Verificado</th><th>Acciones</th></tr></thead>
+      <tbody>
+        {% for u in items %}
+        <tr>
+          <td>{{ u.id }}</td><td>{{ u.name }}</td><td>{{ u.email }}</td><td>{{ u.role }}</td><td>{{ 'Sí' if u.is_verified else 'No' }}</td>
+          <td class="d-flex gap-1">
+            <form method="post" action="{{ url_for('admin.reset_user', user_id=u.id) }}">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="btn btn-sm btn-outline-secondary">Reset</button></form>
+            <form method="post" action="{{ url_for('admin.softdelete_user', user_id=u.id) }}" onsubmit="return confirmSoft(this)">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="btn btn-sm btn-outline-danger">Soft delete</button></form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+  new DataTable('#users');
+  function confirmSoft(form){event.preventDefault(); Swal.fire({title:'¿Eliminar usuario (soft)?', icon:'warning', showCancelButton:true}).then(r=>{if(r.isConfirmed) form.submit();}); return false;}
+</script>
+{% endblock %}

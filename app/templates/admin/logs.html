@@ -1,0 +1,36 @@
+
+{% extends "base.html" %}
+{% block content %}
+<div class="row g-3">
+  <div class="col-lg-6">
+    <div class="card card-shadow p-3">
+      <h2 class="h5">Activity Log</h2>
+      <div class="table-responsive" style="max-height:400px; overflow:auto;">
+        <table class="table table-sm">
+          <thead><tr><th>Fecha</th><th>Actor</th><th>Acción</th><th>Entidad</th><th>ID</th><th>IP</th></tr></thead>
+          <tbody>
+            {% for a in acts %}
+            <tr><td>{{ a.created_at }}</td><td>{{ a.actor_id }}</td><td>{{ a.action }}</td><td>{{ a.entity }}</td><td>{{ a.entity_id }}</td><td>{{ a.ip }}</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-6">
+    <div class="card card-shadow p-3">
+      <h2 class="h5">Login Log</h2>
+      <div class="table-responsive" style="max-height:400px; overflow:auto;">
+        <table class="table table-sm">
+          <thead><tr><th>Fecha</th><th>UserID</th><th>IP</th><th>UA</th></tr></thead>
+          <tbody>
+            {% for l in logins %}
+            <tr><td>{{ l.created_at }}</td><td>{{ l.user_id }}</td><td>{{ l.ip }}</td><td>{{ l.user_agent }}</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

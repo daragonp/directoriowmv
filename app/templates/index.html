@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block content %}
+  <div class="row justify-content-center">
+    <div class="col-12 col-xl-10">
+      <div class="card card-shadow p-4">
+        <h1 class="h4 mb-3">Busca un servicio o producto</h1>
+        <form method="get">
+          <div class="row g-2 align-items-stretch mb-3">
+            <div class="col-12 col-md-9 col-lg-10">
+              <input type="text" name="q" class="form-control form-control-lg"
+                     placeholder="Ej: plomero, abogada, envío..." value="{{ q }}">
+            </div>
+            <div class="col-12 col-md-3 col-lg-2 d-grid">
+              <button class="btn btn-primary btn-lg"><i class="bi bi-search"></i> Buscar</button>
+            </div>
+          </div>
+        </form>
+
+        {% if q and items %}
+          <div class="table-responsive">
+            <table class="table table-hover w-100" id="results">
+              <thead><tr><th>Título</th><th>Negocio</th><th>Persona</th><th>Contacto</th><th></th></tr></thead>
+              <tbody>
+                {% for s in items %}
+                <tr>
+                  <td>{{ s.title }}</td>
+                  <td>{{ s.business_name or '-' }}</td>
+                  <td>{{ s.person_name }}</td>
+                  <td>
+                    {% if s.phone %}<i class="bi bi-telephone"></i> {{ s.phone }}{% endif %}
+                    {% if s.email %}<br><i class="bi bi-envelope"></i> {{ s.email }}{% endif %}
+                  </td>
+                  <td><a class="btn btn-sm btn-outline-primary" href="{{ url_for('services.detail', service_id=s.id) }}">Ver más</a></td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% elif q %}
+          <p class="text-muted m-0">No encontramos resultados para <strong>{{ q }}</strong>.</p>
+        {% else %}
+          <p class="text-body-secondary m-0">Escribe una palabra clave y presiona <em>Buscar</em>.</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+{% endblock %}
+{% block scripts %}
+<script>
+  if (document.getElementById('results')) {
+    new DataTable('#results', { paging: true, searching: false });
+  }
+</script>
+{% endblock %}

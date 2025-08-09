@@ -1,0 +1,50 @@
+
+{% extends "base.html" %}
+{% block content %}
+<div class="card card-shadow p-4">
+  <h1 class="h4">Servicios</h1>
+  <div class="mb-3">
+    <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('admin.admin_services') }}">Todos</a>
+    <a class="btn btn-outline-warning btn-sm" href="{{ url_for('admin.admin_services', status='pending') }}">Pendientes</a>
+    <a class="btn btn-outline-success btn-sm" href="{{ url_for('admin.admin_services', status='approved') }}">Aprobados</a>
+    <a class="btn btn-outline-danger btn-sm" href="{{ url_for('admin.admin_services', status='rejected') }}">Rechazados</a>
+  </div>
+  <div class="table-responsive">
+    <table class="table" id="dt">
+      <thead><tr><th>ID</th><th>Título</th><th>Propietario</th><th>Estado</th><th>Activo</th><th>Acciones</th></tr></thead>
+      <tbody>
+        {% for s in items %}
+        <tr>
+          <td>{{ s.id }}</td>
+          <td>{{ s.title }}</td>
+          <td>{{ s.owner.name }}</td>
+          <td>{{ s.status }}</td>
+          <td>{{ 'Sí' if s.is_active else 'No' }}</td>
+          <td class="d-flex gap-1">
+            <a class="btn btn-sm btn-outline-primary" href="{{ url_for('services.detail', service_id=s.id) }}"><i class="bi bi-eye"></i></a>
+            <form method="post" action="{{ url_for('admin.approve_service', service_id=s.id) }}">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">{% if s.status != 'approved' %}<button class="btn btn-sm btn-success">Aprobar</button>{% endif %}</form>
+            <form method="post" action="{{ url_for('admin.reject_service', service_id=s.id) }}">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">{% if s.status != 'rejected' %}<button class="btn btn-sm btn-warning">Rechazar</button>{% endif %}</form>
+            <form method="post" action="{{ url_for('admin.toggle_active', service_id=s.id) }}">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="btn btn-sm btn-outline-secondary">Activar/Desactivar</button></form>
+            <form method="post" action="{{ url_for('admin.softdelete_service', service_id=s.id) }}" onsubmit="return confirmSoft(this)"><button class="btn btn-sm btn-outline-danger">Soft</button></form>
+            {% if current_user.role == 'superadmin' %}
+            <form method="post" action="{{ url_for('admin.harddelete_service', service_id=s.id) }}" onsubmit="return confirmHard(this)">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="btn btn-sm btn-danger">Hard</button></form>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+  new DataTable('#dt');
+  function confirmSoft(form){event.preventDefault(); Swal.fire({title:'¿Eliminar (soft)?', icon:'warning', showCancelButton:true}).then(r=>{if(r.isConfirmed) form.submit();}); return false;}
+  function confirmHard(form){event.preventDefault(); Swal.fire({title:'¿Eliminar DEFINITIVO?', icon:'error', showCancelButton:true}).then(r=>{if(r.isConfirmed) form.submit();}); return false;}
+</script>
+{% endblock %}

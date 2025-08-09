@@ -1,0 +1,26 @@
+
+{% extends "base.html" %}
+{% block content %}
+<div class="row">
+  <div class="col-md-6 mx-auto">
+    <div class="card card-shadow p-4">
+      <h1 class="h5">Crear usuario</h1>
+      <form method="post">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="mb-3"><label class="form-label">Nombre</label><input name="name" class="form-control" required></div>
+        <div class="mb-3"><label class="form-label">Email</label><input type="email" name="email" class="form-control" required></div>
+        <div class="mb-3"><label class="form-label">Rol</label>
+          <select name="role" class="form-select">
+            <option value="basic">Básico</option>
+            <option value="admin">Administrador</option>
+            <option value="superadmin">Superadministrador</option>
+            <option value="searcher">Buscador</option>
+          </select>
+        </div>
+        <div class="mb-3"><label class="form-label">Contraseña temporal</label><input name="password" class="form-control" value="12345678"></div>
+        <button class="btn btn-primary w-100">Guardar</button>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

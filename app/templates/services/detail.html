@@ -1,0 +1,22 @@
+
+{% extends "base.html" %}
+{% block content %}
+<div class="row">
+  <div class="col-lg-8 mx-auto">
+    <div class="card card-shadow p-4">
+      <h1 class="h4">{{ s.title }}</h1>
+      <p class="text-muted">{{ s.business_name }} — {{ s.person_name }}</p>
+      <p>{{ s.description | nl2br | safe if s.description }}</p>
+      <ul class="list-unstyled">
+        {% if s.phone %}<li><i class="bi bi-telephone"></i> {{ s.phone }}</li>{% endif %}
+        {% if s.email %}<li><i class="bi bi-envelope"></i> {{ s.email }}</li>{% endif %}
+        {% if s.address %}<li><i class="bi bi-geo-alt"></i> {{ s.address }}</li>{% endif %}
+        {% if s.social_link %}<li><i class="bi bi-link-45deg"></i> <a href="{{ s.social_link }}" target="_blank">Red social</a></li>{% endif %}
+      </ul>
+      {% if current_user.is_authenticated and (current_user.id == s.owner_id or current_user.role in ['admin','superadmin']) %}
+      <div class="alert alert-info">Estado: {{ s.status }} | Activo: {{ 'Sí' if s.is_active else 'No' }}</div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}
