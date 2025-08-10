@@ -5,7 +5,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{{ APP_NAME }}</title>
-  <link rel="icon" href="{{ APP_ICON_URL }}">
+  <link rel="icon" href="{{ APP_ICON_URL or url_for('static', filename='icon.svg') }}">
   <script>
     (function () {
       try {
@@ -20,6 +20,24 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
   <link href="https://cdn.datatables.net/2.0.8/css/dataTables.bootstrap5.css" rel="stylesheet">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <style>
+    /* Pequeños ajustes para tarjetas y layout */
+    .card-shadow { box-shadow: 0 0.25rem 0.75rem rgba(0,0,0,.06); }
+    .layout { display: grid; grid-template-columns: 260px 1fr; min-height: 100vh; }
+    .sidebar { border-right: 1px solid var(--bs-border-color); background: var(--bs-body-bg); }
+    .sidebar .nav-link { display: flex; align-items: center; gap:.5rem; border-radius:.5rem; }
+    .sidebar .nav-link .icon { width: 1.25rem; text-align:center; }
+    .sidebar-collapsed .sidebar { width: 72px; }
+    .sidebar-collapsed .sidebar .text-label { display: none; }
+    @media (max-width: 991.98px){
+      .layout { grid-template-columns: 1fr; }
+      body.sidebar-open .sidebar { transform: translateX(0); }
+      .sidebar { position: fixed; top: 56px; bottom: 0; left: 0; width: 260px; transform: translateX(-100%); transition: transform .2s ease; z-index: 1040; }
+      .sidebar-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,.35); display: none; z-index: 1039; }
+      body.sidebar-open #sidebarBackdrop { display: block; }
+    }
+    .cookie-banner { position: fixed; left: 0; right: 0; bottom: 0; z-index: 1080; background: var(--bs-body-bg); border-top: 1px solid var(--bs-border-color); padding: .75rem 1rem; display: flex; align-items: center; justify-content: center; }
+  </style>
 </head>
 <body class="bg-body">
 <header class="navbar bg-body border-bottom sticky-top" id="appHeader">
@@ -28,7 +46,8 @@
       <i class="bi bi-list"></i>
     </button>
     <a class="navbar-brand d-flex align-items-center gap-2" href="{{ url_for('main.index') }}">
-      <img src="{{ APP_ICON_URL }}" alt="icon" style="width:28px;height:28px"> {{ APP_NAME }}
+      <img src="{{ APP_ICON_URL or url_for('static', filename='icon.svg') }}" alt="icon" style="width:28px;height:28px">
+      {{ APP_NAME }}
     </a>
     <div class="d-flex align-items-center gap-2">
       <button class="btn btn-sm btn-outline-secondary d-none d-lg-inline-flex" id="btnCollapse" title="Colapsar menú">
@@ -62,15 +81,16 @@
 <div class="layout" id="layout">
   <aside class="sidebar p-3" id="sidebar" aria-label="Menú lateral">
     <div class="mb-3 d-flex align-items-center gap-2 fw-semibold">
-      <img src="{{ APP_ICON_URL }}" alt="icon" style="width:28px;height:28px">
+      <img src="{{ APP_ICON_URL or url_for('static', filename='icon.svg') }}" alt="icon" style="width:28px;height:28px">
       <strong class="text-label">{{ APP_NAME }}</strong>
     </div>
     <nav class="nav flex-column">
+
       {% if not current_user.is_authenticated %}
         <a class="nav-link {% if request.endpoint=='main.index' %}active{% endif %}" href="{{ url_for('main.index') }}">
           <span class="icon bi bi-search"></span><span class="text-label">Buscar</span>
         </a>
-        <a class="nav-link {% if request.endpoint.startswith('classifieds.') and request.endpoint!='classifieds.mine' and request.endpoint!='classifieds.create' %}active{% endif %}" href="{{ url_for('classifieds.public_list') }}">
+        <a class="nav-link {% if request.endpoint=='main.classifieds_public' %}active{% endif %}" href="{{ url_for('main.classifieds_public') }}">
           <span class="icon bi bi-megaphone"></span><span class="text-label">Clasificados</span>
         </a>
       {% endif %}
@@ -106,9 +126,9 @@
           <span class="icon bi bi-people"></span><span class="text-label">Usuarios</span>
         </a>
         {% if current_user.role == 'superadmin' %}
-        <a class="nav-link {% if request.endpoint=='admin.logs' %}active{% endif %}" href="{{ url_for('admin.logs') }}">
-          <span class="icon bi bi-clipboard-data"></span><span class="text-label">Logs</span>
-        </a>
+          <a class="nav-link {% if request.endpoint=='admin.logs' %}active{% endif %}" href="{{ url_for('admin.logs') }}">
+            <span class="icon bi bi-clipboard-data"></span><span class="text-label">Logs</span>
+          </a>
         {% endif %}
       {% endif %}
     </nav>
@@ -134,7 +154,8 @@
 
     <footer class="text-center py-4 small text-body-secondary">
       &copy; {{ CURRENT_YEAR }} programado por
-      <img src="/static/logoda.png" alt="daragonp" style="height:18px;vertical-align:middle;"> daragonp. Derechos reservados.
+      <img src="{{ url_for('static', filename='logoda.png') }}" alt="daragonp" style="height:18px;vertical-align:middle;">
+      daragonp. Derechos reservados.
     </footer>
   </main>
 </div>
@@ -150,14 +171,15 @@
   </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-<script src="https://cdn.datatables.net/2.0.8/js/dataTables.js"></script>
-<script src="https://cdn.datatables.net/2.0.8/js/dataTables.bootstrap5.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11" defer></script>
+<script src="https://code.jquery.com/jquery-3.7.1.min.js" defer></script>
+<script src="https://cdn.datatables.net/2.0.8/js/dataTables.js" defer></script>
+<script src="https://cdn.datatables.net/2.0.8/js/dataTables.bootstrap5.js" defer></script>
 
 <script>
-(function(){
+document.addEventListener('DOMContentLoaded', function(){
+  // Theme toggle
   const root = document.documentElement;
   const btn = document.getElementById('themeToggle');
   const iconMoon = document.getElementById('icon-moon');
@@ -174,8 +196,8 @@
     try { localStorage.setItem('theme', current); } catch(e) {}
     syncIcons();
   });
-})();
-(function(){
+
+  // Sidebar behavior
   const layout = document.getElementById('layout');
   const sidebar = document.getElementById('sidebar');
   const backdrop = document.getElementById('sidebarBackdrop');
@@ -207,8 +229,8 @@
     if(link && window.innerWidth < 992){ closeMobile(); }
   });
   window.addEventListener('resize', ()=>{ if(window.innerWidth >= 992){ closeMobile(); }});
-})();
-(function(){
+
+  // Cookie banner
   const key = 'cookie-consent';
   const banner = document.getElementById('cookie-banner');
   const accept = document.getElementById('accept-cookies');
@@ -219,7 +241,7 @@
     accept && accept.addEventListener('click', ()=>{ localStorage.setItem(key,'accepted'); banner.classList.add('d-none'); });
     reject && reject.addEventListener('click', ()=>{ localStorage.setItem(key,'rejected'); banner.classList.add('d-none'); });
   } catch(e){}
-})();
+});
 </script>
 
 {% block scripts %}{% endblock %}

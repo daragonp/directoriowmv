@@ -1,51 +1,82 @@
-{% extends 'base.html' %}
+{% extends "base.html" %}
 {% block content %}
-  <div class="row">
-    <div class="col-md-8 mx-auto">
-      <div class="card card-shadow p-4">
-        <h1 class="h4">Mi perfil</h1>
-        <form method="post" enctype="multipart/form-data">
-          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
-          <div class="row g-3">
-            <div class="col-md-6">
-              <label class="form-label">Nombre</label>
-              <input name="name" class="form-control" value="{{ current_user.name }}" />
-            </div>
-            <div class="col-md-6">
-              <label class="form-label">Teléfono</label>
-              <input name="phone" class="form-control" value="{{ current_user.phone or '' }}" />
-            </div>
-            <div class="col-md-6">
-              <label class="form-label">Dirección</label>
-              <input name="address" class="form-control" value="{{ current_user.address or '' }}" />
-            </div>
-            <div class="col-md-6">
-              <label class="form-label">URL de imagen (avatar)</label>
-              <input name="avatar_url" class="form-control" value="{{ current_user.avatar_url or '' }}" />
-            </div>
-            {% if current_user.avatar_url %}
-              <div class="col-12">
-                <img src="{{ current_user.avatar_url }}" alt="avatar" class="rounded-circle" style="width:72px;height:72px;object-fit:cover;border:2px solid var(--bs-border-color);" />
-              </div>
-            {% endif %}
-            <div class="col-md-6">
-              <label class="form-label">Subir imagen (avatar)</label>
-              <input type="file" name="avatar_file" accept="image/*" class="form-control" />
-              <div class="form-text">PNG, JPG, GIF o WEBP. Máx 2MB.</div>
-            </div>
+<div class="row justify-content-center">
+  <div class="col-12 col-md-8 col-lg-6">
+    <div class="card card-shadow">
+      <div class="card-body">
+        <h5 class="card-title mb-3">Mi perfil</h5>
 
-            <div class="col-md-6">
-              <label class="form-label">Email</label>
-              <input type="email" name="email" class="form-control" value="{{ current_user.email }}" />
-            </div>
-            <div class="col-md-6">
-              <label class="form-label">Nueva contraseña</label>
-              <input type="password" name="password" class="form-control" placeholder="Opcional" />
-            </div>
+        <div class="d-flex align-items-center gap-3 mb-3">
+          <img id="avatarPreview"
+               src="{{ current_user.avatar_url or url_for('static', filename='img/avatar-default.png') }}"
+               alt="avatar"
+               class="rounded-circle border"
+               style="width:72px;height:72px;object-fit:cover" />
+          <div class="small text-body-secondary">
+            {{ current_user.name }}<br>
+            <span class="badge bg-secondary">{{ current_user.role }}</span>
           </div>
-          <button class="btn btn-primary mt-3">Guardar cambios</button>
+        </div>
+
+        <form method="post" enctype="multipart/form-data">
+          {{ csrf_token() }}
+          <div class="mb-3">
+            <label class="form-label">Nombre</label>
+            <input name="name" class="form-control" value="{{ current_user.name }}">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Teléfono</label>
+            <input name="phone" class="form-control" value="{{ current_user.phone or '' }}">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Dirección</label>
+            <input name="address" class="form-control" value="{{ current_user.address or '' }}">
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Email (si lo cambias, se solicitará verificación)</label>
+            <input name="email" type="email" class="form-control" value="{{ current_user.email }}">
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Nueva contraseña</label>
+            <input name="password" type="password" class="form-control" placeholder="(opcional)">
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Avatar (archivo)</label>
+            <input name="avatar" id="avatarInput" type="file" accept="image/*" class="form-control">
+            <div class="form-text">Formatos: JPG, PNG, WEBP. Máx 2MB.</div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">o Avatar (URL)</label>
+            <input name="avatar_url" type="url" class="form-control" placeholder="https://...">
+          </div>
+
+          <div class="d-flex gap-2">
+            <button class="btn btn-primary">Guardar cambios</button>
+            <a class="btn btn-outline-secondary" href="{{ url_for('main.index') }}">Cancelar</a>
+          </div>
         </form>
       </div>
     </div>
   </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  // Vista previa instantánea del avatar
+  const input = document.getElementById('avatarInput');
+  const preview = document.getElementById('avatarPreview');
+  if (input) {
+    input.addEventListener('change', (ev) => {
+      const file = ev.target.files && ev.target.files[0];
+      if (!file) return;
+      const url = URL.createObjectURL(file);
+      preview.src = url;
+    });
+  }
+</script>
 {% endblock %}

@@ -1,116 +1,168 @@
-from datetime import datetime
+# app/models.py
+from datetime import datetime, date
 from enum import Enum
 from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
 from . import db, login_manager
 
-class Role(Enum):
-    SUPERADMIN = "superadmin"
-    ADMIN = "admin"
-    BASIC = "basic"
-    SEARCHER = "searcher"
 
-class ServiceStatus(Enum):
-    PENDING = "pending"
-    APPROVED = "approved"
-    REJECTED = "rejected"
+class ServiceStatus(str, Enum):
+    PENDING = "PENDING"
+    APPROVED = "APPROVED"
+    REJECTED = "REJECTED"
 
-class User(UserMixin, db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(120), nullable=False)
-    email = db.Column(db.String(120), unique=True, nullable=False, index=True)
-    phone = db.Column(db.String(50))
-    address = db.Column(db.String(200))
-    password_hash = db.Column(db.String(256), nullable=False)
-    role = db.Column(db.String(20), default=Role.BASIC.value, nullable=False)
-    is_verified = db.Column(db.Boolean, default=False)
-    verification_code = db.Column(db.String(6), nullable=True)
-    avatar_url = db.Column(db.String(255))
-    is_deleted = db.Column(db.Boolean, default=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-
-    # Servicios creados/propiedad del usuario
-    services = db.relationship(
-        "Service",
-        backref="owner",
-        lazy=True,
-        foreign_keys="Service.owner_id",
-    )
-
-    # Servicios que este usuario aprobó (si es admin/superadmin)
-    approved_services = db.relationship(
-        "Service",
-        backref="approver",
-        lazy=True,
-        foreign_keys="Service.approved_by",
-    )
-
-    def set_password(self, password):
-        self.password_hash = generate_password_hash(password)
-
-    def check_password(self, password):
-        return check_password_hash(self.password_hash, password)
-
-    def get_id(self):
-        return str(self.id)
 
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
 
-class Service(db.Model):
+
+class User(db.Model, UserMixin):
+    __tablename__ = "user"
+
     id = db.Column(db.Integer, primary_key=True)
-    owner_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
-    person_name = db.Column(db.String(120), nullable=False)
-    business_name = db.Column(db.String(140))
-    title = db.Column(db.String(140), nullable=False)
-    description = db.Column(db.Text, nullable=False)
-    email = db.Column(db.String(120))
+
+    # Perfil
+    name = db.Column(db.String(150), nullable=False)
+    email = db.Column(db.String(255), unique=True, index=True, nullable=False)
     phone = db.Column(db.String(50))
-    address = db.Column(db.String(200))
-    social_link = db.Column(db.String(200))
-    status = db.Column(db.String(20), default=ServiceStatus.PENDING.value, nullable=False)
-    is_active = db.Column(db.Boolean, default=False)  # requires approval; active toggle
+    address = db.Column(db.String(255))
+    avatar_url = db.Column(db.String(500))
+
+    # Seguridad / estado
+    password_hash = db.Column(db.String(255), nullable=False)
+    role = db.Column(db.String(20), default="user")  # user | admin | superadmin
+    is_verified = db.Column(db.Boolean, default=False)
+    verification_code = db.Column(db.String(10))
     is_deleted = db.Column(db.Boolean, default=False)
-    approved_by = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=True)
-    approved_at = db.Column(db.DateTime, nullable=True)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-
-class LoginLog(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey("user.id"))
-    ip = db.Column(db.String(64))
-    user_agent = db.Column(db.String(255))
-    location = db.Column(db.String(255))
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
-class ActivityLog(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    actor_id = db.Column(db.Integer, db.ForeignKey("user.id"))
-    action = db.Column(db.String(50))  # create_service, update_service, approve_service, etc.
-    entity = db.Column(db.String(50))  # Service/User
-    entity_id = db.Column(db.Integer)
-    details = db.Column(db.Text)
-    ip = db.Column(db.String(64))
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    # Relaciones (lazy='dynamic' para poder encadenar queries)
+    services = db.relationship(
+        "Service",
+        backref="owner",
+        lazy="dynamic",
+        foreign_keys="Service.owner_id",
+    )
+    classifieds = db.relationship(
+        "Classified",
+        backref="owner",
+        lazy="dynamic",
+        foreign_keys="Classified.owner_id",
+    )
 
-class Classified(db.Model):
+    def set_password(self, raw: str):
+        self.password_hash = generate_password_hash(raw)
+
+    def check_password(self, raw: str) -> bool:
+        return check_password_hash(self.password_hash, raw)
+
+    def __repr__(self):
+        return f"<User {self.id} {self.email} ({self.role})>"
+
+
+class Service(db.Model):
+    __tablename__ = "service"
+
     id = db.Column(db.Integer, primary_key=True)
+
+    # Contenido
+    title = db.Column(db.String(200), nullable=False)
+    description = db.Column(db.Text)
+    website = db.Column(db.String(255))
+    social = db.Column(db.String(255))
+    address = db.Column(db.String(255))
+
+    # Propietario
     owner_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
-    title = db.Column(db.String(140), nullable=False)
-    description = db.Column(db.Text, nullable=False)
-    start_date = db.Column(db.Date, nullable=False)
-    end_date = db.Column(db.Date, nullable=False)
-    email = db.Column(db.String(120))
-    phone = db.Column(db.String(50))
-    address = db.Column(db.String(200))
-    link = db.Column(db.String(200))
-    status = db.Column(db.String(20), default=ServiceStatus.PENDING.value, nullable=False)  # reuse enum strings
+
+    # Contacto (se rellenan automáticamente con datos del owner para básicos)
+    contact_name = db.Column(db.String(150))
+    contact_email = db.Column(db.String(255))
+    contact_phone = db.Column(db.String(50))
+
+    # Estado
+    status = db.Column(db.String(20), default=ServiceStatus.PENDING.value)
     is_active = db.Column(db.Boolean, default=False)
     is_deleted = db.Column(db.Boolean, default=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    # Auditoría de flujo
     approved_by = db.Column(db.Integer, db.ForeignKey("user.id"))
     approved_at = db.Column(db.DateTime)
+    rejected_by = db.Column(db.Integer, db.ForeignKey("user.id"))
+    rejected_at = db.Column(db.DateTime)
+
+    def __repr__(self):
+        return f"<Service {self.id} {self.title} [{self.status}]>"
+
+
+class Classified(db.Model):
+    __tablename__ = "classified"
+
+    id = db.Column(db.Integer, primary_key=True)
+
+    # Contenido
+    title = db.Column(db.String(200), nullable=False)
+    description = db.Column(db.Text)
+
+    # Fechas de vigencia (opcionales)
+    start_date = db.Column(db.Date)
+    end_date = db.Column(db.Date)
+
+    # Propietario
+    owner_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+
+    # Estado
+    status = db.Column(db.String(20), default=ServiceStatus.PENDING.value)
+    is_active = db.Column(db.Boolean, default=False)
+    is_deleted = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Auditoría de flujo (⚠️ NUEVO)
+    approved_by = db.Column(db.Integer, db.ForeignKey("user.id"))
+    approved_at = db.Column(db.DateTime)
+    rejected_by = db.Column(db.Integer, db.ForeignKey("user.id"))
+    rejected_at = db.Column(db.DateTime)
+
+    def is_currently_valid(self, today: date | None = None) -> bool:
+        """Útil por si lo quieres usar en queries/plantillas."""
+        today = today or date.today()
+        if self.start_date and self.start_date > today:
+            return False
+        if self.end_date and self.end_date < today:
+            return False
+        return True
+
+    def __repr__(self):
+        return f"<Classified {self.id} {self.title} [{self.status}]>"
+
+
+class LoginLog(db.Model):
+    __tablename__ = "login_log"
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), index=True)
+    ip = db.Column(db.String(100))
+    user_agent = db.Column(db.String(500))
+    location = db.Column(db.String(255))  # si luego integras GeoIP
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    user = db.relationship("User", backref="login_logs")
+
+
+class ActivityLog(db.Model):
+    __tablename__ = "activity_log"
+
+    id = db.Column(db.Integer, primary_key=True)
+    actor_id = db.Column(db.Integer, db.ForeignKey("user.id"), index=True)
+    action = db.Column(db.String(50))           # e.g., "create", "approve", "reject", etc.
+    entity = db.Column(db.String(50))           # e.g., "Service", "Classified", "User"
+    entity_id = db.Column(db.Integer)
+    meta = db.Column(db.Text)                   # json/extra info si la necesitas
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    actor = db.relationship("User", backref="activities")
+
+    def __repr__(self):
+        return f"<ActivityLog {self.id} {self.action} {self.entity}#{self.entity_id}>"

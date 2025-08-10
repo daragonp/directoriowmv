@@ -71,7 +71,6 @@ def admin_services():
         q = q.filter_by(status=status)
     items = q.order_by(Service.created_at.desc()).all()
 
-    # Mapa id->nombre para mostrar "rechazado por"
     users_map = {u.id: u.name for u in User.query.with_entities(User.id, User.name).all()}
 
     return render_template("admin/services.html", items=items, ServiceStatus=ServiceStatus, users_map=users_map)
@@ -82,10 +81,13 @@ def approve_service(service_id):
     if not _require_admin():
         return ("Forbidden", 403)
     s = Service.query.get_or_404(service_id)
+
+    # Si fue rechazado, solo quien lo rechazó puede aprobar; superadmin puede siempre
     if s.status == ServiceStatus.REJECTED.value and not _is_super():
         if s.rejected_by and s.rejected_by != current_user.id:
             flash("Solo el administrador que rechazó este servicio puede volver a aprobarlo.", "warning")
             return redirect(url_for("admin.admin_services"))
+
     s.status = ServiceStatus.APPROVED.value
     s.is_active = True
     s.approved_by = current_user.id
@@ -192,7 +194,7 @@ def reject_classified(cid):
     return redirect(url_for("admin.admin_classifieds"))
 
 # ------------------------
-# Usuarios y Logs (sin cambios relevantes aquí)
+# Usuarios y Logs
 # ------------------------
 @admin_bp.route("/users")
 @login_required

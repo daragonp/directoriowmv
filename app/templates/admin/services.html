@@ -12,7 +12,7 @@
   </div>
 
   <div class="table-responsive">
-    <table class="table" id="dt_services">
+    <table class="table table-sm align-middle js-dt" id="dt_services">
       <thead>
         <tr>
           <th>ID</th>
@@ -72,13 +72,16 @@
         {% endfor %}
       </tbody>
     </table>
+
+    {% if not items %}
+      <div class="text-body-secondary small">No hay servicios para mostrar.</div>
+    {% endif %}
   </div>
 </div>
 {% endblock %}
 
 {% block scripts %}
 <script>
-  new DataTable('#dt_services');
   function confirmSoft(form){
     event.preventDefault();
     Swal.fire({title:'¿Mover a papelera?', text:'Se ocultará el servicio.', icon:'warning', showCancelButton:true})
