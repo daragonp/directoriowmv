@@ -1,34 +1,23 @@
 {% extends "base.html" %}
 {% block content %}
 <div class="row justify-content-center">
-  <div class="col-12 col-md-8 col-lg-6 col-xl-5">
-    <div class="card card-shadow overflow-hidden">
-      <div class="p-4 p-md-5 bg-gradient" style="background:linear-gradient(135deg,#0d6efd 0%,#00c2a8 100%);">
-        <div class="d-flex align-items-center gap-3">
-          <img src="{{ APP_ICON_URL }}" alt="logo" style="width:42px;height:42px">
-          <div>
-            <div class="h5 mb-0 text-white fw-semibold">Directorio DMV</div>
-            <div class="text-white-50 small">Accede a tu cuenta</div>
-          </div>
+  <div class="col-12 col-sm-8 col-md-6 col-lg-4">
+    <div class="card card-shadow p-4">
+      <h1 class="h5 text-center mb-3">Ingresar</h1>
+      <form method="post">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="mb-3">
+          <label class="form-label">Email</label>
+          <input name="email" type="email" class="form-control" required autofocus>
         </div>
-      </div>
-      <div class="p-4 p-md-5">
-        <form method="post">
-          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-          <div class="mb-3">
-            <label class="form-label">Email</label>
-            <input type="email" name="email" class="form-control form-control-lg" required>
-          </div>
-          <div class="mb-3">
-            <label class="form-label">Contraseña</label>
-            <input type="password" name="password" class="form-control form-control-lg" required>
-          </div>
-          <button class="btn btn-primary btn-lg w-100">Ingresar</button>
-          <div class="text-center mt-3">
-            <span class="text-body-secondary">¿No tienes cuenta?</span>
-            <a href="{{ url_for('auth.register') }}" class="link-primary">Regístrate</a>
-          </div>
-        </form>
+        <div class="mb-3">
+          <label class="form-label">Contraseña</label>
+          <input name="password" type="password" class="form-control" required>
+        </div>
+        <button class="btn btn-primary w-100">Entrar</button>
+      </form>
+      <div class="text-center mt-3">
+        <a href="{{ url_for('auth.register') }}">Crear cuenta</a>
       </div>
     </div>
   </div>

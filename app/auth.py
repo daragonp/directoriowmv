@@ -125,39 +125,42 @@ def logout():
 @login_required
 def profile():
     if request.method == "POST":
+        # Campos básicos
         current_user.name = request.form.get("name", current_user.name)
         current_user.phone = request.form.get("phone", current_user.phone)
         current_user.address = request.form.get("address", current_user.address)
 
-        # Avatar por archivo (subida)
-        file = request.files.get("avatar")
-        saved = save_avatar(file, current_user.id) if file else None
-        if saved:
-            current_user.avatar_url = saved
-            flash("Avatar actualizado.", "success")
+        # Subida de avatar
+        file = request.files.get("avatar_file")
+        if file and file.filename:
+            url = save_avatar(file, current_user.id)
+            if url:
+                current_user.avatar_url = url
+                flash("Avatar actualizado.", "success")
+            else:
+                flash("La imagen no es válida (extensión o tamaño).", "warning")
 
-        # Avatar por URL (si no se subió archivo)
-        avatar_url = request.form.get("avatar_url","").strip()
-        if avatar_url and not saved:
-            current_user.avatar_url = avatar_url
-            flash("Avatar actualizado (URL).", "success")
-
-        # Cambio de email => re-verificar
+        # Cambiar email → requiere reverificación
         email = request.form.get("email","").lower().strip()
         if email and email != current_user.email:
-            current_user.email = email
-            current_user.is_verified = False
-            current_user.verification_code = gen_code(6)
-            db.session.commit()
-            token = _ts().dumps({"uid": current_user.id, "code": current_user.verification_code})
-            link = _build_verify_link(token)
-            send_verification_email(current_user.email, link, code=current_user.verification_code)
-            flash("Email actualizado. Te enviamos un enlace para verificarlo.", "info")
+            # Evitar duplicados
+            if User.query.filter(User.email == email, User.id != current_user.id).first():
+                flash("Ese email ya está en uso por otro usuario.", "danger")
+            else:
+                current_user.email = email
+                current_user.is_verified = False
+                current_user.verification_code = gen_code(6)
+                send_verification_email(current_user.email, current_user.verification_code)
+                flash("Email actualizado. Verifícalo con el código que te enviamos.", "info")
 
+        # Cambiar contraseña
         pwd = request.form.get("password","")
         if pwd:
             current_user.set_password(pwd)
             flash("Contraseña actualizada.", "success")
 
         db.session.commit()
+        log_action(current_user, "update_profile", "User", current_user.id, "Perfil actualizado")
+        return redirect(url_for("auth.profile"))
+
     return render_template("auth/profile.html")

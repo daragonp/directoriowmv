@@ -1,4 +1,5 @@
 import os
+import json
 import random
 import string
 import ipaddress
@@ -17,47 +18,6 @@ def gen_code(length: int = 6) -> str:
     alphabet = string.ascii_uppercase + string.digits
     return "".join(random.choice(alphabet) for _ in range(length))
 
-def _activity_kwargs(**base):
-    """
-    Compatibilidad: algunos modelos usan 'detail', otros 'details'.
-    Construye kwargs aceptando ambos, priorizando 'detail' y cayendo a 'details'.
-    """
-    try:
-        # Intentar con 'detail'
-        return dict(detail=base.get("detail") or base.get("details"),
-                    user_id=base.get("user_id"),
-                    action=base.get("action"),
-                    entity=base.get("entity"),
-                    entity_id=base.get("entity_id"),
-                    ip=base.get("ip"),
-                    user_agent=base.get("user_agent"))
-    except Exception:
-        # Fallback con 'details'
-        return dict(details=base.get("detail") or base.get("details"),
-                    user_id=base.get("user_id"),
-                    action=base.get("action"),
-                    entity=base.get("entity"),
-                    entity_id=base.get("entity_id"),
-                    ip=base.get("ip"),
-                    user_agent=base.get("user_agent"))
-
-def log_action(user, action: str, entity: str, entity_id: int, detail: str = ""):
-    """Guarda una línea de auditoría en ActivityLog."""
-    try:
-        entry = ActivityLog(**_activity_kwargs(
-            user_id=user.id if user else None,
-            action=action,
-            entity=entity,
-            entity_id=entity_id,
-            detail=detail,
-            ip=get_client_ip(request) or (request.remote_addr if request else None),
-            user_agent=(request.headers.get("User-Agent") if request else None)
-        ))
-        db.session.add(entry)
-        db.session.commit()
-    except Exception:
-        db.session.rollback()
-
 def allowed_image(filename) -> bool:
     """Valida extensión de imagen según configuración."""
     if not filename or "." not in filename:
@@ -66,10 +26,12 @@ def allowed_image(filename) -> bool:
     allowed_cfg = current_app.config.get("ALLOWED_IMAGE_EXTENSIONS")
     avatar_allowed = current_app.config.get("AVATAR_ALLOWED_EXT")
     allowed = set()
-    if isinstance(allowed_cfg, (set, list, tuple)): allowed |= set(allowed_cfg)
-    if isinstance(avatar_allowed, (set, list, tuple)): allowed |= set(avatar_allowed)
+    if isinstance(allowed_cfg, (set, list, tuple)): 
+        allowed |= set(allowed_cfg)
+    if isinstance(avatar_allowed, (set, list, tuple)): 
+        allowed |= set(avatar_allowed)
     if not allowed:
-        allowed = {"png", "jpg", "jpeg", "webp"}
+        allowed = {"png", "jpg", "jpeg", "webp", "gif"}
     return ext in allowed
 
 def save_avatar(file_storage, user_id: int) -> Optional[str]:
@@ -80,20 +42,27 @@ def save_avatar(file_storage, user_id: int) -> Optional[str]:
     if not file_storage or file_storage.filename == "":
         return None
 
+    # Directorio destino (con valor por defecto robusto)
     upload_dir = current_app.config.get("AVATAR_UPLOAD_DIR")
+    if not upload_dir:
+        upload_dir = os.path.join(current_app.root_path, "static", "uploads", "avatars")
+
     max_size = int(current_app.config.get("AVATAR_MAX_SIZE", 2 * 1024 * 1024))
 
-    # Tamaño (mejor esfuerzo)
-    try:
-        pos = file_storage.stream.tell()
-    except Exception:
-        pos = 0
-    try:
-        file_storage.stream.seek(0, os.SEEK_END)
-        size = file_storage.stream.tell()
-        file_storage.stream.seek(pos)
-    except Exception:
-        size = 0
+    # Tamaño: usa content_length si está disponible; si no, calcula con stream
+    size = getattr(file_storage, "content_length", None)
+    if not size:
+        try:
+            pos = file_storage.stream.tell()
+        except Exception:
+            pos = 0
+        try:
+            file_storage.stream.seek(0, os.SEEK_END)
+            size = file_storage.stream.tell()
+            file_storage.stream.seek(pos)
+        except Exception:
+            size = 0
+
     if size and size > max_size:
         return None
 
@@ -108,8 +77,55 @@ def save_avatar(file_storage, user_id: int) -> Optional[str]:
     os.makedirs(os.path.dirname(abs_path), exist_ok=True)
     file_storage.save(abs_path)
 
-    # URL pública
+    # URL pública (no usamos url_for aquí para no exigir contexto)
     return f"/static/uploads/avatars/{new_name}"
+
+# -------------------------
+# Auditoría / logs
+# -------------------------
+
+def log_action(user, action: str, entity: str, entity_id: int, detail: str = ""):
+    """
+    Guarda una línea de auditoría en ActivityLog.
+    Compatibilidad:
+      - Si el modelo tiene (actor_id, meta), guardamos JSON con ip/ua/detalle.
+      - Si no, intentamos con (user_id, detail, ip, user_agent).
+    """
+    ip = get_client_ip(request) or (request.remote_addr if request else None)
+    ua = request.headers.get("User-Agent") if request else None
+    meta = {"detail": detail, "ip": ip, "user_agent": ua}
+
+    try:
+        # Modelo moderno (actor_id + meta JSON string)
+        entry = ActivityLog(
+            actor_id=(user.id if user else None),
+            action=action,
+            entity=entity,
+            entity_id=entity_id,
+            meta=json.dumps(meta, ensure_ascii=False)
+        )
+        db.session.add(entry)
+        db.session.commit()
+        return
+    except TypeError:
+        # Compatibilidad con modelo antiguo
+        try:
+            entry = ActivityLog(
+                user_id=(user.id if user else None),
+                action=action,
+                entity=entity,
+                entity_id=entity_id,
+                detail=detail,
+                ip=ip,
+                user_agent=ua
+            )
+            db.session.add(entry)
+            db.session.commit()
+            return
+        except Exception:
+            db.session.rollback()
+    except Exception:
+        db.session.rollback()
 
 # -------------------------
 # IP real del cliente
