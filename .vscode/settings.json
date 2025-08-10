@@ -1,0 +1,36 @@
+{
+  // Usa el intérprete del proyecto (ajusta la ruta si tu venv tiene otro nombre)
+  "python.defaultInterpreterPath": "${workspaceFolder}\\.venv\\Scripts\\python.exe",
+
+  // Pylance: nivel "basic" reduce ruido; puedes dejarlo en "standard" si prefieres
+  "python.analysis.typeCheckingMode": "basic",
+
+  // Asegurar que los imports se resuelven contra el venv
+  "python.analysis.extraPaths": [],
+
+  // Asocia .html a Jinja para sintaxis correcta
+  "files.associations": {
+    "*.html": "jinja-html",
+    "*.jinja": "jinja-html",
+    "*.j2": "jinja-html"
+  },
+
+  // Formateador por defecto para Jinja (instala la extensión "jinja" de samuelcolvin si no la tienes)
+  "[jinja-html]": {
+    "editor.defaultFormatter": "samuelcolvin.jinjahtml",
+    "editor.formatOnSave": true
+  },
+
+  // Desactiva validaciones de Django templates en este workspace (si tienes la extensión de Django instalada)
+  "django.languageServerEnabled": false,
+
+  // Emmet dentro de Jinja
+  "emmet.includeLanguages": {
+    "jinja-html": "html"
+  },
+
+  // Opcional: Si quieres silenciar solo en este proyecto los "reportMissingImports"
+  // "python.analysis.diagnosticSeverityOverrides": {
+  //   "reportMissingImports": "information"
+  // }
+}

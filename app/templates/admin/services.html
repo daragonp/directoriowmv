@@ -1,38 +1,72 @@
-
 {% extends "base.html" %}
 {% block content %}
 <div class="card card-shadow p-4">
-  <h1 class="h4">Servicios</h1>
-  <div class="mb-3">
-    <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('admin.admin_services') }}">Todos</a>
-    <a class="btn btn-outline-warning btn-sm" href="{{ url_for('admin.admin_services', status='pending') }}">Pendientes</a>
-    <a class="btn btn-outline-success btn-sm" href="{{ url_for('admin.admin_services', status='approved') }}">Aprobados</a>
-    <a class="btn btn-outline-danger btn-sm" href="{{ url_for('admin.admin_services', status='rejected') }}">Rechazados</a>
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="h5 m-0">Servicios</h1>
+    <div class="btn-group">
+      <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('admin.admin_services') }}">Todos</a>
+      <a class="btn btn-outline-warning btn-sm" href="{{ url_for('admin.admin_services', status=ServiceStatus.PENDING.value) }}">Pendientes</a>
+      <a class="btn btn-outline-success btn-sm" href="{{ url_for('admin.admin_services', status=ServiceStatus.APPROVED.value) }}">Aprobados</a>
+      <a class="btn btn-outline-danger btn-sm" href="{{ url_for('admin.admin_services', status=ServiceStatus.REJECTED.value) }}">Rechazados</a>
+    </div>
   </div>
+
   <div class="table-responsive">
-    <table class="table" id="dt">
-      <thead><tr><th>ID</th><th>Título</th><th>Propietario</th><th>Estado</th><th>Activo</th><th>Acciones</th></tr></thead>
+    <table class="table" id="dt_services">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Título</th>
+          <th>Estado</th>
+          <th>Activo</th>
+          <th>Rechazado por</th>
+          <th>Creado</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
       <tbody>
         {% for s in items %}
         <tr>
           <td>{{ s.id }}</td>
-          <td>{{ s.title }}</td>
-          <td>{{ s.owner.name }}</td>
-          <td>{{ s.status }}</td>
+          <td class="text-truncate" style="max-width: 340px">{{ s.title }}</td>
+          <td>
+            <span class="badge text-bg-{% if s.status==ServiceStatus.APPROVED.value %}success{% elif s.status==ServiceStatus.PENDING.value %}warning{% else %}danger{% endif %}">
+              {{ s.status }}
+            </span>
+          </td>
           <td>{{ 'Sí' if s.is_active else 'No' }}</td>
-          <td class="d-flex gap-1">
-            <a class="btn btn-sm btn-outline-primary" href="{{ url_for('services.detail', service_id=s.id) }}"><i class="bi bi-eye"></i></a>
+          <td>{{ users_map.get(s.rejected_by) or '' }}</td>
+          <td>{{ s.created_at.strftime('%Y-%m-%d') if s.created_at else '' }}</td>
+          <td class="d-flex gap-1 flex-wrap">
+            <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('services.detail', service_id=s.id) }}" title="Ver"><i class="bi bi-eye"></i></a>
+
+            {% if s.status != ServiceStatus.APPROVED.value %}
             <form method="post" action="{{ url_for('admin.approve_service', service_id=s.id) }}">
-  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">{% if s.status != 'approved' %}<button class="btn btn-sm btn-success">Aprobar</button>{% endif %}</form>
-            <form method="post" action="{{ url_for('admin.reject_service', service_id=s.id) }}">
-  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">{% if s.status != 'rejected' %}<button class="btn btn-sm btn-warning">Rechazar</button>{% endif %}</form>
-            <form method="post" action="{{ url_for('admin.toggle_active', service_id=s.id) }}">
-  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="btn btn-sm btn-outline-secondary">Activar/Desactivar</button></form>
-            <form method="post" action="{{ url_for('admin.softdelete_service', service_id=s.id) }}" onsubmit="return confirmSoft(this)"><button class="btn btn-sm btn-outline-danger">Soft</button></form>
-            {% if current_user.role == 'superadmin' %}
-            <form method="post" action="{{ url_for('admin.harddelete_service', service_id=s.id) }}" onsubmit="return confirmHard(this)">
-  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="btn btn-sm btn-danger">Hard</button></form>
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button class="btn btn-sm btn-success" title="Aprobar">Aprobar</button>
+            </form>
             {% endif %}
+
+            {% if s.status != ServiceStatus.REJECTED.value %}
+            <form method="post" action="{{ url_for('admin.reject_service', service_id=s.id) }}">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button class="btn btn-sm btn-warning" title="Rechazar">Rechazar</button>
+            </form>
+            {% endif %}
+
+            {% if s.status == ServiceStatus.APPROVED.value %}
+            <form method="post" action="{{ url_for('admin.toggle_active', service_id=s.id) }}">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button class="btn btn-sm btn-outline-primary" title="{{ 'Desactivar' if s.is_active else 'Activar' }}">
+                {{ 'Desactivar' if s.is_active else 'Activar' }}
+              </button>
+            </form>
+            {% endif %}
+
+            <form method="post" action="{{ url_for('admin.softdelete_service', service_id=s.id) }}" onsubmit="return confirmSoft(this)">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button class="btn btn-sm btn-outline-danger" title="Papelera">Papelera</button>
+            </form>
           </td>
         </tr>
         {% endfor %}
@@ -41,10 +75,15 @@
   </div>
 </div>
 {% endblock %}
+
 {% block scripts %}
 <script>
-  new DataTable('#dt');
-  function confirmSoft(form){event.preventDefault(); Swal.fire({title:'¿Eliminar (soft)?', icon:'warning', showCancelButton:true}).then(r=>{if(r.isConfirmed) form.submit();}); return false;}
-  function confirmHard(form){event.preventDefault(); Swal.fire({title:'¿Eliminar DEFINITIVO?', icon:'error', showCancelButton:true}).then(r=>{if(r.isConfirmed) form.submit();}); return false;}
+  new DataTable('#dt_services');
+  function confirmSoft(form){
+    event.preventDefault();
+    Swal.fire({title:'¿Mover a papelera?', text:'Se ocultará el servicio.', icon:'warning', showCancelButton:true})
+      .then(r=>{ if(r.isConfirmed) form.submit(); });
+    return false;
+  }
 </script>
 {% endblock %}

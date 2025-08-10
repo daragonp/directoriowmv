@@ -1,18 +1,45 @@
-
 {% extends "base.html" %}
 {% block content %}
-<div class="row">
-  <div class="col-md-6 mx-auto">
-    <div class="card card-shadow p-4">
-      <h1 class="h4">Registro</h1>
-      <form method="post">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-        <div class="mb-3"><label class="form-label">Nombre</label><input name="name" class="form-control" required></div>
-        <div class="mb-3"><label class="form-label">Email</label><input type="email" name="email" class="form-control" required></div>
-        <div class="mb-3"><label class="form-label">Teléfono</label><input name="phone" class="form-control"></div>
-        <div class="mb-3"><label class="form-label">Contraseña</label><input type="password" name="password" class="form-control" required></div>
-        <button class="btn btn-primary w-100">Crear cuenta</button>
-      </form>
+<div class="row justify-content-center">
+  <div class="col-12 col-md-9 col-lg-7 col-xl-6">
+    <div class="card card-shadow overflow-hidden">
+      <div class="p-4 p-md-5 bg-gradient" style="background:linear-gradient(135deg,#0d6efd 0%,#00c2a8 100%);">
+        <div class="d-flex align-items-center gap-3">
+          <img src="{{ APP_ICON_URL }}" alt="logo" style="width:42px;height:42px">
+          <div>
+            <div class="h5 mb-0 text-white fw-semibold">Únete al Directorio</div>
+            <div class="text-white-50 small">Crea tu cuenta para publicar</div>
+          </div>
+        </div>
+      </div>
+      <div class="p-4 p-md-5">
+        <form method="post">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label">Nombre</label>
+              <input name="name" class="form-control form-control-lg" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Teléfono</label>
+              <input name="phone" class="form-control form-control-lg">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Email</label>
+              <input type="email" name="email" class="form-control form-control-lg" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Contraseña</label>
+              <input type="password" name="password" class="form-control form-control-lg" required>
+            </div>
+          </div>
+          <button class="btn btn-primary btn-lg w-100 mt-3">Crear cuenta</button>
+          <div class="text-center mt-3">
+            <span class="text-body-secondary">¿Ya tienes cuenta?</span>
+            <a href="{{ url_for('auth.login') }}" class="link-primary">Inicia sesión</a>
+          </div>
+        </form>
+      </div>
     </div>
   </div>
 </div>

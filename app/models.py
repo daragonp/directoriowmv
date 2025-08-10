@@ -95,3 +95,22 @@ class ActivityLog(db.Model):
     details = db.Column(db.Text)
     ip = db.Column(db.String(64))
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+class Classified(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    owner_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+    title = db.Column(db.String(140), nullable=False)
+    description = db.Column(db.Text, nullable=False)
+    start_date = db.Column(db.Date, nullable=False)
+    end_date = db.Column(db.Date, nullable=False)
+    email = db.Column(db.String(120))
+    phone = db.Column(db.String(50))
+    address = db.Column(db.String(200))
+    link = db.Column(db.String(200))
+    status = db.Column(db.String(20), default=ServiceStatus.PENDING.value, nullable=False)  # reuse enum strings
+    is_active = db.Column(db.Boolean, default=False)
+    is_deleted = db.Column(db.Boolean, default=False)
+    approved_by = db.Column(db.Integer, db.ForeignKey("user.id"))
+    approved_at = db.Column(db.DateTime)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)

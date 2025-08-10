@@ -1,31 +1,61 @@
-
 {% extends "base.html" %}
 {% block content %}
 <div class="row g-3">
-  <div class="col-lg-6">
+  <div class="col-12 col-xl-6">
     <div class="card card-shadow p-3">
-      <h2 class="h5">Activity Log</h2>
-      <div class="table-responsive" style="max-height:400px; overflow:auto;">
-        <table class="table table-sm">
-          <thead><tr><th>Fecha</th><th>Actor</th><th>Acción</th><th>Entidad</th><th>ID</th><th>IP</th></tr></thead>
+      <h2 class="h6">Activity Log</h2>
+      <div class="table-responsive">
+        <table class="table table-sm" id="dt_activity">
+          <thead>
+            <tr>
+              <th>Fecha</th>
+              <th>Usuario</th>
+              <th>Acción</th>
+              <th>Entidad</th>
+              <th>Entidad ID</th>
+              <th>Detalle</th>
+              <th>IP</th>
+            </tr>
+          </thead>
           <tbody>
-            {% for a in acts %}
-            <tr><td>{{ a.created_at }}</td><td>{{ a.actor_id }}</td><td>{{ a.action }}</td><td>{{ a.entity }}</td><td>{{ a.entity_id }}</td><td>{{ a.ip }}</td></tr>
+            {% for a in activities %}
+            <tr>
+              <td>{{ a.created_at.strftime('%Y-%m-%d %H:%M:%S') if a.created_at else '' }}</td>
+              <td>{{ a.user_id }}</td>
+              <td>{{ a.action }}</td>
+              <td>{{ a.entity }}</td>
+              <td>{{ a.entity_id }}</td>
+              <td>{{ a.detail or '' }}</td>
+              <td>{{ a.ip or '' }}</td>
+            </tr>
             {% endfor %}
           </tbody>
         </table>
       </div>
     </div>
   </div>
-  <div class="col-lg-6">
+
+  <div class="col-12 col-xl-6">
     <div class="card card-shadow p-3">
-      <h2 class="h5">Login Log</h2>
-      <div class="table-responsive" style="max-height:400px; overflow:auto;">
-        <table class="table table-sm">
-          <thead><tr><th>Fecha</th><th>UserID</th><th>IP</th><th>UA</th></tr></thead>
+      <h2 class="h6">Login Log</h2>
+      <div class="table-responsive">
+        <table class="table table-sm" id="dt_logins">
+          <thead>
+            <tr>
+              <th>Fecha</th>
+              <th>Usuario</th>
+              <th>IP</th>
+              <th>User-Agent</th>
+            </tr>
+          </thead>
           <tbody>
             {% for l in logins %}
-            <tr><td>{{ l.created_at }}</td><td>{{ l.user_id }}</td><td>{{ l.ip }}</td><td>{{ l.user_agent }}</td></tr>
+            <tr>
+              <td>{{ l.created_at.strftime('%Y-%m-%d %H:%M:%S') if l.created_at else '' }}</td>
+              <td>{{ l.user_id }}</td>
+              <td>{{ l.ip or '' }}</td>
+              <td class="text-truncate" style="max-width: 360px">{{ l.user_agent or '' }}</td>
+            </tr>
             {% endfor %}
           </tbody>
         </table>
@@ -33,4 +63,11 @@
     </div>
   </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  new DataTable('#dt_activity');
+  new DataTable('#dt_logins');
+</script>
 {% endblock %}

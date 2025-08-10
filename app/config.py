@@ -9,3 +9,6 @@ class Config:
     MAIL_FROM = os.environ.get("MAIL_FROM", "no-reply@example.com")
     # Toggle console email vs SMTP later
     USE_CONSOLE_EMAIL = True
+    UPLOAD_FOLDER = "app/static/uploads/avatars"
+    MAX_CONTENT_LENGTH = 2 * 1024 * 1024  # 2MB
+    ALLOWED_IMAGE_EXTENSIONS = {"png", "jpg", "jpeg", "gif", "webp"}

@@ -1,10 +1,53 @@
-
 {% extends "base.html" %}
 {% block content %}
 <div class="row g-3">
-  <div class="col-md-3"><div class="card card-shadow p-3 text-center"><div class="h6 text-muted">Servicios</div><div class="display-6">{{ total_services }}</div></div></div>
-  <div class="col-md-3"><div class="card card-shadow p-3 text-center"><div class="h6 text-muted">Pendientes</div><div class="display-6">{{ pending }}</div></div></div>
-  <div class="col-md-3"><div class="card card-shadow p-3 text-center"><div class="h6 text-muted">Aprobados</div><div class="display-6">{{ approved }}</div></div></div>
-  <div class="col-md-3"><div class="card card-shadow p-3 text-center"><div class="h6 text-muted">Usuarios</div><div class="display-6">{{ users }}</div></div></div>
+  <!-- KPIs -->
+  <div class="col-12 col-sm-6 col-lg-3">
+    <div class="card card-shadow p-3">
+      <div class="text-body-secondary small">Usuarios totales</div>
+      <div class="display-6 fw-semibold">{{ kpis.total_users }}</div>
+    </div>
+  </div>
+  <div class="col-12 col-sm-6 col-lg-3">
+    <div class="card card-shadow p-3">
+      <div class="text-body-secondary small">Usuarios activos (30d)</div>
+      <div class="display-6 fw-semibold">{{ kpis.active_users_30d }}</div>
+    </div>
+  </div>
+  <div class="col-12 col-sm-6 col-lg-3">
+    <div class="card card-shadow p-3">
+      <div class="text-body-secondary small">Servicios activos</div>
+      <div class="display-6 fw-semibold">{{ kpis.services_active }}</div>
+    </div>
+  </div>
+  <div class="col-12 col-sm-6 col-lg-3">
+    <div class="card card-shadow p-3">
+      <div class="text-body-secondary small">Clasificados activos</div>
+      <div class="display-6 fw-semibold">{{ kpis.classifieds_active }}</div>
+    </div>
+  </div>
+
+  <div class="col-12 col-lg-6">
+    <div class="card card-shadow p-3 h-100">
+      <div class="text-body-secondary small">Pendientes</div>
+      <ul class="list-unstyled m-0">
+        <li class="d-flex justify-content-between py-1"><span>Servicios pendientes</span><strong>{{ kpis.services_pending }}</strong></li>
+        <li class="d-flex justify-content-between py-1"><span>Clasificados pendientes</span><strong>{{ kpis.classifieds_pending }}</strong></li>
+        <li class="d-flex justify-content-between py-1"><span>Inicios de sesión hoy</span><strong>{{ kpis.logins_today }}</strong></li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="col-12 col-lg-6">
+    <div class="card card-shadow p-3 h-100">
+      <div class="text-body-secondary small mb-2">Resumen</div>
+      <ul class="list-unstyled m-0">
+        <li class="py-1">Usuarios totales: <strong>{{ kpis.total_users }}</strong></li>
+        <li class="py-1">Usuarios activos (30d): <strong>{{ kpis.active_users_30d }}</strong></li>
+        <li class="py-1">Servicios activos: <strong>{{ kpis.services_active }}</strong></li>
+        <li class="py-1">Clasificados activos: <strong>{{ kpis.classifieds_active }}</strong></li>
+      </ul>
+    </div>
+  </div>
 </div>
 {% endblock %}

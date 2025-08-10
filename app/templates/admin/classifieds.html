@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="card card-shadow p-4">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="h5 m-0">Clasificados</h1>
+    <div class="btn-group">
+      <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('admin.admin_classifieds') }}">Todos</a>
+      <a class="btn btn-outline-warning btn-sm" href="{{ url_for('admin.admin_classifieds', status=ServiceStatus.PENDING.value) }}">Pendientes</a>
+      <a class="btn btn-outline-success btn-sm" href="{{ url_for('admin.admin_classifieds', status=ServiceStatus.APPROVED.value) }}">Aprobados</a>
+      <a class="btn btn-outline-danger btn-sm" href="{{ url_for('admin.admin_classifieds', status=ServiceStatus.REJECTED.value) }}">Rechazados</a>
+    </div>
+  </div>
+
+  <div class="table-responsive">
+    <table class="table" id="dt_cls">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Título</th>
+          <th>Estado</th>
+          <th>Activo</th>
+          <th>Rechazado por</th>
+          <th>Creado</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for c in items %}
+        <tr>
+          <td>{{ c.id }}</td>
+          <td class="text-truncate" style="max-width: 340px">{{ c.title }}</td>
+          <td>
+            <span class="badge text-bg-{% if c.status==ServiceStatus.APPROVED.value %}success{% elif c.status==ServiceStatus.PENDING.value %}warning{% else %}danger{% endif %}">
+              {{ c.status }}
+            </span>
+          </td>
+          <td>{{ 'Sí' if c.is_active else 'No' }}</td>
+          <td>{{ users_map.get(c.rejected_by) or '' }}</td>
+          <td>{{ c.created_at.strftime('%Y-%m-%d') if c.created_at else '' }}</td>
+          <td class="d-flex gap-1 flex-wrap">
+            <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('classifieds.detail', cid=c.id) }}" title="Ver"><i class="bi bi-eye"></i></a>
+
+            {% if c.status != ServiceStatus.APPROVED.value %}
+            <form method="post" action="{{ url_for('admin.approve_classified', cid=c.id) }}">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button class="btn btn-sm btn-success" title="Aprobar">Aprobar</button>
+            </form>
+            {% endif %}
+
+            {% if c.status != ServiceStatus.REJECTED.value %}
+            <form method="post" action="{{ url_for('admin.reject_classified', cid=c.id) }}">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button class="btn btn-sm btn-warning" title="Rechazar">Rechazar</button>
+            </form>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script> new DataTable('#dt_cls'); </script>
+{% endblock %}

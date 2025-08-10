@@ -24,3 +24,6 @@ def index():
         items = base.order_by(Service.created_at.desc()).limit(100).all()
     return render_template("index.html", items=items, q=q)
 
+@main_bp.route("/privacy")
+def privacy():
+    return render_template("privacy.html")

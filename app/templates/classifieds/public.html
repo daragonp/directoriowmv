@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-12 col-xl-10">
+    <div class="card card-shadow p-4">
+      <h1 class="h4 mb-3">Clasificados activos</h1>
+      <form method="get" class="mb-3">
+        <div class="input-group input-group-lg">
+          <input class="form-control" name="q" value="{{ q }}" placeholder="Ej: carpintero, clases, courier...">
+          <button class="btn btn-primary"><i class="bi bi-search"></i> Buscar</button>
+        </div>
+      </form>
+      <div class="table-responsive">
+        <table class="table" id="cls">
+          <thead><tr><th>Título</th><th>Vigencia</th><th>Contacto</th><th></th></tr></thead>
+          <tbody>
+            {% for c in items %}
+            <tr>
+              <td>{{ c.title }}</td>
+              <td>{{ c.start_date }} – {{ c.end_date }}</td>
+              <td>
+                {% if c.phone %}<i class="bi bi-telephone"></i> {{ c.phone }}{% endif %}
+                {% if c.email %}<br><i class="bi bi-envelope"></i> {{ c.email }}{% endif %}
+              </td>
+              <td>
+                {% if c.link %}<a class="btn btn-sm btn-outline-primary" href="{{ c.link }}" target="_blank">Abrir</a>{% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script> new DataTable('#cls',{searching:false}); </script>
+{% endblock %}

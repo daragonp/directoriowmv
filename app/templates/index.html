@@ -1,54 +1,40 @@
 {% extends "base.html" %}
 {% block content %}
-  <div class="row justify-content-center">
-    <div class="col-12 col-xl-10">
-      <div class="card card-shadow p-4">
-        <h1 class="h4 mb-3">Busca un servicio o producto</h1>
-        <form method="get">
-          <div class="row g-2 align-items-stretch mb-3">
-            <div class="col-12 col-md-9 col-lg-10">
-              <input type="text" name="q" class="form-control form-control-lg"
-                     placeholder="Ej: plomero, abogada, envío..." value="{{ q }}">
-            </div>
-            <div class="col-12 col-md-3 col-lg-2 d-grid">
-              <button class="btn btn-primary btn-lg"><i class="bi bi-search"></i> Buscar</button>
-            </div>
-          </div>
-        </form>
+<div class="row justify-content-center">
+  <div class="col-12 col-xl-10">
+    <div class="card card-shadow p-4">
+      <h1 class="h5 mb-3">Busca servicios</h1>
+      <form method="get" class="row g-2">
+        <div class="col">
+          <input type="text" class="form-control" name="q" placeholder="Palabra o descripción..." value="{{ q or '' }}">
+        </div>
+        <div class="col-auto">
+          <button class="btn btn-primary" type="submit">Buscar</button>
+        </div>
+      </form>
 
-        {% if q and items %}
-          <div class="table-responsive">
-            <table class="table table-hover w-100" id="results">
-              <thead><tr><th>Título</th><th>Negocio</th><th>Persona</th><th>Contacto</th><th></th></tr></thead>
-              <tbody>
-                {% for s in items %}
-                <tr>
-                  <td>{{ s.title }}</td>
-                  <td>{{ s.business_name or '-' }}</td>
-                  <td>{{ s.person_name }}</td>
-                  <td>
-                    {% if s.phone %}<i class="bi bi-telephone"></i> {{ s.phone }}{% endif %}
-                    {% if s.email %}<br><i class="bi bi-envelope"></i> {{ s.email }}{% endif %}
-                  </td>
-                  <td><a class="btn btn-sm btn-outline-primary" href="{{ url_for('services.detail', service_id=s.id) }}">Ver más</a></td>
-                </tr>
-                {% endfor %}
-              </tbody>
-            </table>
+      {% if items is not none %}
+        <hr>
+        {% if items %}
+          <div class="list-group">
+            {% for s in items %}
+              <div class="list-group-item">
+                <div class="d-flex w-100 justify-content-between align-items-center">
+                  <h5 class="mb-1 me-2 text-truncate">{{ s.title }}</h5>
+                  <a class="btn btn-sm btn-outline-primary" href="{{ url_for('services.detail', service_id=s.id) }}">Ver más</a>
+                </div>
+                {% if s.description %}
+                <p class="mb-1 text-truncate">{{ s.description }}</p>
+                {% endif %}
+                <small class="text-body-secondary">{{ s.contact_name }}{% if s.contact_phone %} — {{ s.contact_phone }}{% endif %}</small>
+              </div>
+            {% endfor %}
           </div>
-        {% elif q %}
-          <p class="text-muted m-0">No encontramos resultados para <strong>{{ q }}</strong>.</p>
         {% else %}
-          <p class="text-body-secondary m-0">Escribe una palabra clave y presiona <em>Buscar</em>.</p>
+          <div class="text-body-secondary">Sin resultados.</div>
         {% endif %}
-      </div>
+      {% endif %}
     </div>
   </div>
-{% endblock %}
-{% block scripts %}
-<script>
-  if (document.getElementById('results')) {
-    new DataTable('#results', { paging: true, searching: false });
-  }
-</script>
+</div>
 {% endblock %}

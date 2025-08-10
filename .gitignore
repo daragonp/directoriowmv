@@ -1,3 +1,5 @@
+".venv/\n__pycache__/\n*.pyc\napp.db\ninstance/\n.DS_Store\n.env\n.vscode/"
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[codz]

@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="row">
+  <div class="col-lg-8 mx-auto">
+    <div class="card card-shadow p-4">
+      <h1 class="h4">{{ c.title }}</h1>
+      <p class="text-body-secondary">Vigencia: {{ c.start_date }} — {{ c.end_date }}</p>
+      <p>{{ c.description | replace('\n','<br>') | safe }}</p>
+      <ul class="list-unstyled">
+        {% if c.phone %}<li><i class="bi bi-telephone"></i> {{ c.phone }}</li>{% endif %}
+        {% if c.email %}<li><i class="bi bi-envelope"></i> {{ c.email }}</li>{% endif %}
+        {% if c.address %}<li><i class="bi bi-geo-alt"></i> {{ c.address }}</li>{% endif %}
+        {% if c.link %}<li><i class="bi bi-link-45deg"></i> <a href="{{ c.link }}" target="_blank">Enlace</a></li>{% endif %}
+      </ul>
+      {% if current_user.is_authenticated and (current_user.id == c.owner_id or current_user.role in ['admin','superadmin']) %}
+        <div class="alert alert-info">Estado: {{ c.status }} | Activo: {{ 'Sí' if c.is_active else 'No' }}</div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

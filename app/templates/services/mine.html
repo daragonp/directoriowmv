@@ -16,9 +16,10 @@
             <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('services.edit_service', service_id=s.id) }}"><i class="bi bi-pencil"></i></a>
             <a class="btn btn-sm btn-outline-primary" href="{{ url_for('services.detail', service_id=s.id) }}"><i class="bi bi-eye"></i></a>
             <form method="post" action="{{ url_for('services.soft_delete', service_id=s.id) }}" class="d-inline" onsubmit="return confirmDelete(this)">
-              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-              <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
-            </form>
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <button class="btn btn-sm btn-outline-danger" title="Mover a papelera"><i class="bi bi-trash"></i></button>
+</form>
+
 
           </td>
         </tr>
@@ -33,9 +34,10 @@
   new DataTable('#mine');
   function confirmDelete(form){
     event.preventDefault();
-    Swal.fire({title:'¿Eliminar?', text:'Esto es un borrado lógico.', icon:'warning', showCancelButton:true})
+    Swal.fire({title:'¿Mover a papelera?', text:'Podrás restaurarlo pidiendo a un administrador.', icon:'warning', showCancelButton:true})
       .then(r=>{ if(r.isConfirmed){ form.submit(); }});
     return false;
   }
 </script>
+
 {% endblock %}

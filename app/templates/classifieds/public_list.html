@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-12 col-xl-10">
+    <div class="card card-shadow p-4">
+      <h1 class="h5 mb-3">Clasificados</h1>
+      {% if items %}
+      <div class="row g-3">
+        {% for c in items %}
+        <div class="col-12 col-md-6 col-xxl-4">
+          <div class="card h-100">
+            <div class="card-body d-flex flex-column">
+              <h5 class="card-title mb-1 text-truncate">{{ c.title }}</h5>
+              <div class="small text-body-secondary mb-2">
+                {% if c.start_date or c.end_date %}
+                  Vigencia:
+                  {{ c.start_date.strftime('%Y-%m-%d') if c.start_date else '?' }}
+                  –
+                  {{ c.end_date.strftime('%Y-%m-%d') if c.end_date else '?' }}
+                {% else %}
+                  Vigencia: No definida
+                {% endif %}
+              </div>
+              {% if c.description %}
+              <p class="card-text text-truncate">{{ c.description }}</p>
+              {% endif %}
+              <div class="mt-auto">
+                <a href="{{ url_for('classifieds.detail', cid=c.id) }}" class="btn btn-sm btn-outline-primary">Ver más</a>
+              </div>
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+        <div class="text-body-secondary">No hay clasificados activos y vigentes en este momento.</div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,4 +1,3 @@
-
 {% set is_admin = (current_user.is_authenticated and current_user.role in ['admin','superadmin']) %}
 <!doctype html>
 <html lang="es">
@@ -14,140 +13,215 @@
         const system = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
         const theme = saved || system;
         document.documentElement.setAttribute('data-bs-theme', theme);
-      } catch (e) { /* no-op */ }
+      } catch (e) {}
     })();
   </script>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
   <link href="https://cdn.datatables.net/2.0.8/css/dataTables.bootstrap5.css" rel="stylesheet">
-  <style>
-    .brand { display:flex; align-items:center; gap:.5rem; font-weight:600; }
-    .brand img { width:28px; height:28px; }
-    .card-shadow { box-shadow: 0 10px 20px rgba(0,0,0,.05); border-radius:1rem; }
-  @media (prefers-color-scheme: dark) {
-    :root[data-bs-theme="dark"] .card-shadow { box-shadow: 0 10px 20px rgba(0,0,0,.35); }
-  }
-  </style>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body class="bg-body">
-<nav class="navbar navbar-expand-lg bg-body border-bottom sticky-top">
-  <div class="container">
-    <a class="navbar-brand brand" href="{{ url_for('main.index') }}">
-      <img src="{{ APP_ICON_URL }}" alt="icon"> {{ APP_NAME }}
-    </a>
-    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#nav">
-      <span class="navbar-toggler-icon"></span>
+<header class="navbar bg-body border-bottom sticky-top" id="appHeader">
+  <div class="container-fluid">
+    <button class="btn btn-light d-lg-none" id="btnMobileMenu" aria-controls="sidebar" aria-expanded="false" aria-label="Abrir menú">
+      <i class="bi bi-list"></i>
     </button>
-    <div class="collapse navbar-collapse" id="nav">
-      <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-        <li class="nav-item"><a class="nav-link" href="{{ url_for('main.index') }}">Inicio</a></li>
-        {% if current_user.is_authenticated %}
-          <li class="nav-item"><a class="nav-link" href="{{ url_for('services.my_services') }}">Mis servicios</a></li>
-          <li class="nav-item"><a class="nav-link" href="{{ url_for('services.create_service') }}">Crear servicio</a></li>
-        {% endif %}
-        {% if is_admin %}
-          <li class="nav-item dropdown">
-            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">Administración</a>
-            <ul class="dropdown-menu">
-              <li><a class="dropdown-item" href="{{ url_for('admin.dashboard') }}">Dashboard</a></li>
-              <li><a class="dropdown-item" href="{{ url_for('admin.admin_services') }}">Servicios</a></li>
-              <li><a class="dropdown-item" href="{{ url_for('admin.users') }}">Usuarios</a></li>
-              {% if current_user.role == 'superadmin' %}
-                <li><a class="dropdown-item" href="{{ url_for('admin.logs') }}">Logs</a></li>
-              {% endif %}
-            </ul>
-          </li>
-        {% endif %}
-      </ul>
-      <ul class="navbar-nav">
-        {% if current_user.is_authenticated %}
-          <li class="nav-item"><a class="nav-link" href="{{ url_for('auth.profile') }}"><i class="bi bi-person-circle"></i> {{ current_user.name }}</a></li>
-          <li class="nav-item"><a class="nav-link" href="{{ url_for('auth.logout') }}">Salir</a></li>
-        {% else %}
-          <li class="nav-item"><a class="nav-link" href="{{ url_for('auth.login') }}">Ingresar</a></li>
-          <li class="nav-item"><a class="nav-link" href="{{ url_for('auth.register') }}">Registro</a></li>
-        {% endif %}
-        <li class="nav-item me-2">
-  <button class="btn btn-sm btn-outline-secondary" id="themeToggle" type="button" aria-label="Cambiar tema">
-    <i class="bi bi-moon-stars" id="icon-moon"></i>
-    <i class="bi bi-brightness-high" id="icon-sun" style="display:none"></i>
-  </button>
-</li>
-      </ul>
+    <a class="navbar-brand d-flex align-items-center gap-2" href="{{ url_for('main.index') }}">
+      <img src="{{ APP_ICON_URL }}" alt="icon" style="width:28px;height:28px"> {{ APP_NAME }}
+    </a>
+    <div class="d-flex align-items-center gap-2">
+      <button class="btn btn-sm btn-outline-secondary d-none d-lg-inline-flex" id="btnCollapse" title="Colapsar menú">
+        <i class="bi bi-layout-sidebar-inset"></i>
+      </button>
+      <button class="btn btn-sm btn-outline-secondary" id="themeToggle" type="button" aria-label="Cambiar tema">
+        <i class="bi bi-moon-stars" id="icon-moon"></i>
+        <i class="bi bi-brightness-high" id="icon-sun" style="display:none"></i>
+      </button>
+      {% if current_user.is_authenticated %}
+        <span class="badge text-bg-secondary d-none d-md-inline">{{ current_user.role }}</span>
+        <a class="btn btn-sm btn-outline-primary d-flex align-items-center gap-2" href="{{ url_for('auth.profile') }}">
+          {% if current_user.avatar_url %}
+            <img src="{{ current_user.avatar_url }}" alt="avatar" class="rounded-circle" style="width:24px;height:24px;object-fit:cover;">
+          {% else %}
+            <i class="bi bi-person-circle"></i>
+          {% endif %}
+          <span class="d-none d-sm-inline">{{ current_user.name }}</span>
+        </a>
+        <a class="btn btn-sm btn-outline-danger" href="{{ url_for('auth.logout') }}">Salir</a>
+      {% else %}
+        <a class="btn btn-sm btn-outline-primary" href="{{ url_for('auth.login') }}">Ingresar</a>
+        <a class="btn btn-sm btn-primary" href="{{ url_for('auth.register') }}">Registro</a>
+      {% endif %}
     </div>
   </div>
-</nav>
+</header>
 
-<main class="container py-4">
-  {% with messages = get_flashed_messages(with_categories=True) %}
-    {% if messages %}
-      <div class="position-fixed top-0 end-0 p-3" style="z-index: 1080">
-        {% for category, message in messages %}
-          <div class="toast align-items-center text-bg-{{ 'danger' if category=='danger' else category }} border-0 show my-2">
-            <div class="d-flex">
-              <div class="toast-body">{{ message }}</div>
-              <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+<div id="sidebarBackdrop" class="sidebar-backdrop d-lg-none" aria-hidden="true"></div>
+
+<div class="layout" id="layout">
+  <aside class="sidebar p-3" id="sidebar" aria-label="Menú lateral">
+    <div class="mb-3 d-flex align-items-center gap-2 fw-semibold">
+      <img src="{{ APP_ICON_URL }}" alt="icon" style="width:28px;height:28px">
+      <strong class="text-label">{{ APP_NAME }}</strong>
+    </div>
+    <nav class="nav flex-column">
+      {% if not current_user.is_authenticated %}
+        <a class="nav-link {% if request.endpoint=='main.index' %}active{% endif %}" href="{{ url_for('main.index') }}">
+          <span class="icon bi bi-search"></span><span class="text-label">Buscar</span>
+        </a>
+        <a class="nav-link {% if request.endpoint.startswith('classifieds.') and request.endpoint!='classifieds.mine' and request.endpoint!='classifieds.create' %}active{% endif %}" href="{{ url_for('classifieds.public_list') }}">
+          <span class="icon bi bi-megaphone"></span><span class="text-label">Clasificados</span>
+        </a>
+      {% endif %}
+
+      {% if current_user.is_authenticated %}
+        <div class="mt-3 text-body-secondary small text-label">Mi cuenta</div>
+        <a class="nav-link {% if request.endpoint=='services.my_services' %}active{% endif %}" href="{{ url_for('services.my_services') }}">
+          <span class="icon bi bi-collection"></span><span class="text-label">Mis servicios</span>
+        </a>
+        <a class="nav-link {% if request.endpoint=='services.create_service' %}active{% endif %}" href="{{ url_for('services.create_service') }}">
+          <span class="icon bi bi-plus-square"></span><span class="text-label">Crear servicio</span>
+        </a>
+        <a class="nav-link {% if request.endpoint=='classifieds.mine' %}active{% endif %}" href="{{ url_for('classifieds.mine') }}">
+          <span class="icon bi bi-ticket-perforated"></span><span class="text-label">Mis clasificados</span>
+        </a>
+        <a class="nav-link {% if request.endpoint=='classifieds.create' %}active{% endif %}" href="{{ url_for('classifieds.create') }}">
+          <span class="icon bi bi-plus-circle"></span><span class="text-label">Crear clasificado</span>
+        </a>
+      {% endif %}
+
+      {% if is_admin %}
+        <div class="mt-3 text-body-secondary small text-label">Administración</div>
+        <a class="nav-link {% if request.endpoint=='admin.dashboard' %}active{% endif %}" href="{{ url_for('admin.dashboard') }}">
+          <span class="icon bi bi-speedometer2"></span><span class="text-label">Dashboard</span>
+        </a>
+        <a class="nav-link {% if request.endpoint=='admin.admin_services' %}active{% endif %}" href="{{ url_for('admin.admin_services') }}">
+          <span class="icon bi bi-kanban"></span><span class="text-label">Servicios</span>
+        </a>
+        <a class="nav-link {% if request.endpoint=='admin.admin_classifieds' %}active{% endif %}" href="{{ url_for('admin.admin_classifieds') }}">
+          <span class="icon bi bi-megaphone-fill"></span><span class="text-label">Clasificados</span>
+        </a>
+        <a class="nav-link {% if request.endpoint=='admin.users' %}active{% endif %}" href="{{ url_for('admin.users') }}">
+          <span class="icon bi bi-people"></span><span class="text-label">Usuarios</span>
+        </a>
+        {% if current_user.role == 'superadmin' %}
+        <a class="nav-link {% if request.endpoint=='admin.logs' %}active{% endif %}" href="{{ url_for('admin.logs') }}">
+          <span class="icon bi bi-clipboard-data"></span><span class="text-label">Logs</span>
+        </a>
+        {% endif %}
+      {% endif %}
+    </nav>
+  </aside>
+
+  <main class="container-fluid py-4">
+    {% with messages = get_flashed_messages(with_categories=True) %}
+      {% if messages %}
+        <div class="position-fixed top-0 end-0 p-3" style="z-index:1080">
+          {% for category, message in messages %}
+            <div class="toast text-bg-{{ 'danger' if category=='danger' else category }} border-0 show my-2">
+              <div class="d-flex">
+                <div class="toast-body">{{ message }}</div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+              </div>
             </div>
-          </div>
-        {% endfor %}
-      </div>
-    {% endif %}
-  {% endwith %}
-  {% block content %}{% endblock %}
-</main>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
 
-<footer class="text-center py-4 small text-body-secondary">
-  Hecho con Flask, Bootstrap, DataTables y SweetAlert2.
-</footer>
+    {% block content %}{% endblock %}
+
+    <footer class="text-center py-4 small text-body-secondary">
+      &copy; {{ CURRENT_YEAR }} programado por
+      <img src="/static/logoda.png" alt="daragonp" style="height:18px;vertical-align:middle;"> daragonp. Derechos reservados.
+    </footer>
+  </main>
+</div>
+
+<div id="cookie-banner" class="cookie-banner d-none">
+  <span>
+    Usamos cookies y procesamos datos para mejorar su experiencia. Al continuar, acepta nuestra
+    <a href="{{ url_for('main.privacy') }}" target="_blank" rel="noopener">Política de Privacidad</a>.
+  </span>
+  <div class="ms-3 d-flex gap-2">
+    <button id="accept-cookies" class="btn btn-primary btn-sm">Aceptar</button>
+    <button id="reject-cookies" class="btn btn-outline-secondary btn-sm">Rechazar no esenciales</button>
+  </div>
+</div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="https://cdn.datatables.net/2.0.8/js/dataTables.js"></script>
+<script src="https://cdn.datatables.net/2.0.8/js/dataTables.bootstrap5.js"></script>
+
 <script>
 (function(){
   const root = document.documentElement;
   const btn = document.getElementById('themeToggle');
   const iconMoon = document.getElementById('icon-moon');
   const iconSun = document.getElementById('icon-sun');
-
   function syncIcons() {
     const t = root.getAttribute('data-bs-theme') || 'light';
-    if (t === 'dark') {
-      iconMoon && (iconMoon.style.display = 'inline-block');
-      iconSun && (iconSun.style.display = 'none');
-    } else {
-      iconMoon && (iconMoon.style.display = 'none');
-      iconSun && (iconSun.style.display = 'inline-block');
-    }
+    if (t === 'dark') { iconMoon.style.display='inline-block'; iconSun.style.display='none'; }
+    else { iconMoon.style.display='none'; iconSun.style.display='inline-block'; }
   }
-
-  // Inicial
   syncIcons();
-
-  // Toggle manual
   btn && btn.addEventListener('click', () => {
     const current = root.getAttribute('data-bs-theme') === 'dark' ? 'light' : 'dark';
     root.setAttribute('data-bs-theme', current);
     try { localStorage.setItem('theme', current); } catch(e) {}
     syncIcons();
   });
+})();
+(function(){
+  const layout = document.getElementById('layout');
+  const sidebar = document.getElementById('sidebar');
+  const backdrop = document.getElementById('sidebarBackdrop');
+  const btnCollapse = document.getElementById('btnCollapse');
+  const btnMobile = document.getElementById('btnMobileMenu');
 
-  // Si el usuario NO ha elegido tema, sincronizar con el sistema
+  function setCollapsed(v){
+    if(!layout) return;
+    if(v){ layout.classList.add('sidebar-collapsed'); }
+    else { layout.classList.remove('sidebar-collapsed'); }
+    try{ localStorage.setItem('sidebar-collapsed', v ? '1' : '0'); }catch(e){}
+  }
+  try{ setCollapsed(localStorage.getItem('sidebar-collapsed') === '1'); }catch(e){}
+
+  btnCollapse && btnCollapse.addEventListener('click', ()=>{
+    const v = !layout.classList.contains('sidebar-collapsed');
+    setCollapsed(v);
+  });
+
+  function openMobile(){ document.body.classList.add('sidebar-open'); btnMobile.setAttribute('aria-expanded','true'); }
+  function closeMobile(){ document.body.classList.remove('sidebar-open'); btnMobile.setAttribute('aria-expanded','false'); }
+  btnMobile && btnMobile.addEventListener('click', (e)=>{
+    e.preventDefault();
+    if(document.body.classList.contains('sidebar-open')) closeMobile(); else openMobile();
+  });
+  backdrop && backdrop.addEventListener('click', closeMobile);
+  sidebar && sidebar.addEventListener('click', (ev)=>{
+    const link = ev.target.closest('a.nav-link');
+    if(link && window.innerWidth < 992){ closeMobile(); }
+  });
+  window.addEventListener('resize', ()=>{ if(window.innerWidth >= 992){ closeMobile(); }});
+})();
+(function(){
+  const key = 'cookie-consent';
+  const banner = document.getElementById('cookie-banner');
+  const accept = document.getElementById('accept-cookies');
+  const reject = document.getElementById('reject-cookies');
   try {
-    const mq = window.matchMedia('(prefers-color-scheme: dark)');
-    mq.addEventListener('change', (e) => {
-      if (!localStorage.getItem('theme')) {
-        const t = e.matches ? 'dark' : 'light';
-        root.setAttribute('data-bs-theme', t);
-        syncIcons();
-      }
-    });
-  } catch(e) {}
+    const v = localStorage.getItem(key);
+    if (!v) banner && banner.classList.remove('d-none');
+    accept && accept.addEventListener('click', ()=>{ localStorage.setItem(key,'accepted'); banner.classList.add('d-none'); });
+    reject && reject.addEventListener('click', ()=>{ localStorage.setItem(key,'rejected'); banner.classList.add('d-none'); });
+  } catch(e){}
 })();
 </script>
 
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-<script src="https://cdn.datatables.net/2.0.8/js/dataTables.js"></script>
-<script src="https://cdn.datatables.net/2.0.8/js/dataTables.bootstrap5.js"></script>
 {% block scripts %}{% endblock %}
 </body>
 </html>
