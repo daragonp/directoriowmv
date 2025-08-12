@@ -3,6 +3,7 @@ from datetime import datetime, timedelta
 from flask import Blueprint, render_template, request, redirect, url_for, flash
 from flask_login import login_required, current_user
 from werkzeug.security import generate_password_hash
+from sqlalchemy import or_
 from .models import db, User, Service, ServiceStatus, LoginLog, Classified, ActivityLog
 from .utils import log_action
 
@@ -81,13 +82,10 @@ def approve_service(service_id):
     if not _require_admin():
         return ("Forbidden", 403)
     s = Service.query.get_or_404(service_id)
-
-    # Si fue rechazado, solo quien lo rechazó puede aprobar; superadmin puede siempre
     if s.status == ServiceStatus.REJECTED.value and not _is_super():
         if s.rejected_by and s.rejected_by != current_user.id:
             flash("Solo el administrador que rechazó este servicio puede volver a aprobarlo.", "warning")
             return redirect(url_for("admin.admin_services"))
-
     s.status = ServiceStatus.APPROVED.value
     s.is_active = True
     s.approved_by = current_user.id
@@ -194,7 +192,7 @@ def reject_classified(cid):
     return redirect(url_for("admin.admin_classifieds"))
 
 # ------------------------
-# Usuarios y Logs
+# Usuarios (búsqueda + control por rol)
 # ------------------------
 @admin_bp.route("/users")
 @login_required
@@ -202,15 +200,22 @@ def users():
     if not _require_admin():
         return ("Forbidden", 403)
 
-    if _is_super():
-        items = User.query.filter_by(is_deleted=False).order_by(User.created_at.desc()).limit(1000).all()
-    else:
-        items = User.query.filter(
-            User.is_deleted == False,
-            User.role == "user"
-        ).order_by(User.created_at.desc()).limit(1000).all()
+    q = (request.args.get("q") or "").strip()
+    base = User.query.filter(User.is_deleted == False)
 
-    return render_template("admin/users.html", items=items)
+    if _is_super():
+        # Superadmin ve todos los no eliminados
+        query = base
+    else:
+        # Admin solo básicos
+        query = base.filter(User.role == "user")
+
+    if q:
+        like = f"%{q}%"
+        query = query.filter(or_(User.name.ilike(like), User.email.ilike(like)))
+
+    items = query.order_by(User.created_at.desc()).limit(1000).all()
+    return render_template("admin/users.html", items=items, q=q)
 
 @admin_bp.route("/users/create", methods=["GET", "POST"])
 @login_required
@@ -222,7 +227,7 @@ def create_user():
         email = request.form.get("email","").lower().strip()
         phone = request.form.get("phone","").strip()
         role = request.form.get("role","user").strip()
-        if current_user.role != "superadmin":
+        if not _is_super():
             role = "user"
         password = request.form.get("password","").strip()
         if not name or not email:
@@ -247,7 +252,7 @@ def edit_user(uid):
     if not _require_admin():
         return ("Forbidden", 403)
     u = User.query.get_or_404(uid)
-    if current_user.role != "superadmin" and u.role != "user":
+    if not _is_super() and u.role != "user":
         flash("No autorizado.", "danger")
         return redirect(url_for("admin.users"))
     if request.method == "POST":
@@ -266,7 +271,7 @@ def reset_password(uid):
     if not _require_admin():
         return ("Forbidden", 403)
     u = User.query.get_or_404(uid)
-    if current_user.role != "superadmin" and u.role != "user":
+    if not _is_super() and u.role != "user":
         flash("No autorizado.", "danger")
         return redirect(url_for("admin.users"))
     temp = f"Temp-{u.id}-{int(datetime.utcnow().timestamp())}"
@@ -282,7 +287,7 @@ def softdelete_user(uid):
     if not _require_admin():
         return ("Forbidden", 403)
     u = User.query.get_or_404(uid)
-    if (current_user.role != "superadmin" and u.role != "user") or (u.id == current_user.id):
+    if (not _is_super() and u.role != "user") or (u.id == current_user.id):
         flash("No autorizado.", "danger")
         return redirect(url_for("admin.users"))
     u.is_deleted = True
@@ -294,6 +299,7 @@ def softdelete_user(uid):
 @admin_bp.route("/users/change_role/<int:uid>", methods=["POST"])
 @login_required
 def change_role(uid):
+    # Solo superadmin
     if not (_require_admin() and _is_super()):
         return ("Forbidden", 403)
     u = User.query.get_or_404(uid)
@@ -301,17 +307,66 @@ def change_role(uid):
     if new_role not in ("user", "admin", "superadmin"):
         flash("Rol inválido.", "danger")
         return redirect(url_for("admin.users"))
+
+    # Garantizar que quede al menos 1 superadmin
     if u.role == "superadmin" and new_role in ("admin", "user"):
         remaining = User.query.filter_by(role="superadmin", is_deleted=False).count()
         if remaining <= 1:
             flash("Debe quedar al menos un superadmin activo.", "warning")
             return redirect(url_for("admin.users"))
+
     u.role = new_role
     db.session.commit()
     log_action(current_user, "change_role", "User", u.id, f"{new_role}")
     flash("Rol actualizado.", "success")
     return redirect(url_for("admin.users"))
 
+@admin_bp.route("/users/verify/<int:uid>", methods=["POST"])
+@login_required
+def verify_user(uid):
+    if not (_require_admin() and _is_super()):
+        return ("Forbidden", 403)
+    u = User.query.get_or_404(uid)
+    if u.is_verified:
+        flash("El usuario ya está verificado.", "info")
+        return redirect(url_for("admin.users"))
+    u.is_verified = True
+    u.verification_code = None
+    db.session.commit()
+    log_action(current_user, "verify_user", "User", u.id, "")
+    flash("Usuario verificado manualmente.", "success")
+    return redirect(url_for("admin.users"))
+
+@admin_bp.route("/users/harddelete/<int:uid>", methods=["POST"])
+@login_required
+def harddelete_user(uid):
+    if not (_require_admin() and _is_super()):
+        return ("Forbidden", 403)
+    u = User.query.get_or_404(uid)
+
+    if u.id == current_user.id:
+        flash("No puedes eliminarte a ti mismo.", "warning")
+        return redirect(url_for("admin.users"))
+    if u.role == "superadmin":
+        remaining = User.query.filter_by(role="superadmin", is_deleted=False).count()
+        if remaining <= 1:
+            flash("Debe quedar al menos un superadmin activo.", "warning")
+            return redirect(url_for("admin.users"))
+
+    Service.query.filter_by(owner_id=u.id).delete(synchronize_session=False)
+    Classified.query.filter_by(owner_id=u.id).delete(synchronize_session=False)
+    ActivityLog.query.filter((ActivityLog.actor_id == u.id)).delete(synchronize_session=False)
+    LoginLog.query.filter_by(user_id=u.id).delete(synchronize_session=False)
+
+    db.session.delete(u)
+    db.session.commit()
+    log_action(current_user, "hard_delete", "User", uid, "")
+    flash("Usuario eliminado definitivamente.", "success")
+    return redirect(url_for("admin.users"))
+
+# ------------------------
+# Logs
+# ------------------------
 @admin_bp.route("/logs")
 @login_required
 def logs():

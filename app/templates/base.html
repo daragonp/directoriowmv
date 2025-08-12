@@ -80,10 +80,6 @@
 
 <div class="layout" id="layout">
   <aside class="sidebar p-3" id="sidebar" aria-label="Menú lateral">
-    <div class="mb-3 d-flex align-items-center gap-2 fw-semibold">
-      <img src="{{ APP_ICON_URL or url_for('static', filename='icon.svg') }}" alt="icon" style="width:28px;height:28px">
-      <strong class="text-label">{{ APP_NAME }}</strong>
-    </div>
     <nav class="nav flex-column">
 
       {% if not current_user.is_authenticated %}
@@ -210,7 +206,7 @@ document.addEventListener('DOMContentLoaded', function(){
     else { layout.classList.remove('sidebar-collapsed'); }
     try{ localStorage.setItem('sidebar-collapsed', v ? '1' : '0'); }catch(e){}
   }
-  try{ setCollapsed(localStorage.getItem('sidebar-collapsed') === '1'); }catch(e){}
+  try{ setCollapsed(localStorage.getItem('sidebar-collapsed') === '0'); }catch(e){}
 
   btnCollapse && btnCollapse.addEventListener('click', ()=>{
     const v = !layout.classList.contains('sidebar-collapsed');

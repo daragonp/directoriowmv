@@ -1,11 +1,18 @@
 {% extends "base.html" %}
 {% block content %}
 <div class="card card-shadow p-4">
-  <div class="d-flex justify-content-between align-items-center mb-3">
+  <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
     <h1 class="h5 m-0">Usuarios</h1>
-    <a href="{{ url_for('admin.create_user') }}" class="btn btn-primary btn-sm">
-      <i class="bi bi-person-plus"></i> Crear usuario
-    </a>
+
+    <form class="d-flex gap-2" role="search" method="get" action="{{ url_for('admin.users') }}">
+      <input name="q" value="{{ q or '' }}" class="form-control form-control-sm" type="search" placeholder="Buscar por nombre o email">
+      <button class="btn btn-sm btn-outline-primary" type="submit">Buscar</button>
+      {% if q %}
+        <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('admin.users') }}">Limpiar</a>
+      {% endif %}
+    </form>
+
+    <a href="{{ url_for('admin.create_user') }}" class="btn btn-primary btn-sm">Crear usuario</a>
   </div>
 
   <div class="table-responsive">
@@ -15,74 +22,90 @@
           <th>ID</th>
           <th>Nombre</th>
           <th>Email</th>
-          <th>Teléfono</th>
           <th>Rol</th>
           <th>Verificado</th>
+          <th>Código verificación</th>
           <th>Creado</th>
-          <th class="text-nowrap">Acciones</th>
+          <th>Acciones</th>
         </tr>
       </thead>
       <tbody>
-        {% for u in items %}
+      {% for u in items %}
         <tr>
           <td>{{ u.id }}</td>
-          <td>{{ u.name }}</td>
-          <td>{{ u.email }}</td>
-          <td>{{ u.phone or '' }}</td>
+          <td class="text-truncate" style="max-width:220px">{{ u.name }}</td>
+          <td class="text-truncate" style="max-width:260px">{{ u.email }}</td>
           <td>
-            <span class="badge text-bg-secondary">{{ u.role }}</span>
-            {% if current_user.role == 'superadmin' %}
-              <div class="dropdown d-inline">
-                <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
-                  Cambiar
-                </button>
-                <ul class="dropdown-menu">
-                  <li>
-                    <form method="post" action="{{ url_for('admin.change_role', uid=u.id) }}" class="px-2 py-1">
-                      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                      <input type="hidden" name="role" value="user">
-                      <button class="dropdown-item" type="submit" {% if u.role=='user' %}disabled{% endif %}>user</button>
-                    </form>
-                  </li>
-                  <li>
-                    <form method="post" action="{{ url_for('admin.change_role', uid=u.id) }}" class="px-2 py-1">
-                      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                      <input type="hidden" name="role" value="admin">
-                      <button class="dropdown-item" type="submit" {% if u.role=='admin' %}disabled{% endif %}>admin</button>
-                    </form>
-                  </li>
-                  <li>
-                    <form method="post" action="{{ url_for('admin.change_role', uid=u.id) }}" class="px-2 py-1">
-                      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                      <input type="hidden" name="role" value="superadmin">
-                      <button class="dropdown-item" type="submit" {% if u.role=='superadmin' %}disabled{% endif %}>superadmin</button>
-                    </form>
-                  </li>
-                </ul>
-              </div>
+            <span class="badge text-bg-{% if u.role=='superadmin' %}dark{% elif u.role=='admin' %}primary{% else %}secondary{% endif %}">
+              {{ u.role }}
+            </span>
+          </td>
+          <td>
+            {% if u.is_verified %}
+              <span class="badge text-bg-success">Sí</span>
+            {% else %}
+              <span class="badge text-bg-warning">No</span>
             {% endif %}
           </td>
-          <td>{{ 'Sí' if u.is_verified else 'No' }}</td>
+          <td>
+            {% if u.is_verified %}
+              —
+            {% else %}
+              <span class="font-monospace">{{ u.verification_code or '' }}</span>
+            {% endif %}
+          </td>
           <td>{{ u.created_at.strftime('%Y-%m-%d') if u.created_at else '' }}</td>
           <td class="d-flex flex-wrap gap-1">
-            <a class="btn btn-sm btn-outline-primary" href="{{ url_for('admin.edit_user', uid=u.id) }}" title="Editar">Editar</a>
+            <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('admin.edit_user', uid=u.id) }}" title="Editar">
+              <i class="bi bi-pencil"></i>
+            </a>
 
             <form method="post" action="{{ url_for('admin.reset_password', uid=u.id) }}">
               <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-              <button class="btn btn-sm btn-outline-secondary" type="submit" title="Reset pass">
-                Reset pass
+              <button class="btn btn-sm btn-outline-warning" title="Reset password">
+                <i class="bi bi-key"></i>
               </button>
             </form>
 
-            {% if current_user.id != u.id %}
             <form method="post" action="{{ url_for('admin.softdelete_user', uid=u.id) }}" onsubmit="return confirmSoft(this)">
               <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-              <button class="btn btn-sm btn-outline-danger" type="submit" title="Papelera">Papelera</button>
+              <button class="btn btn-sm btn-outline-danger" title="Papelera">
+                <i class="bi bi-archive"></i>
+              </button>
             </form>
+
+            {% if current_user.role == 'superadmin' %}
+              {% if not u.is_verified %}
+              <form method="post" action="{{ url_for('admin.verify_user', uid=u.id) }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button class="btn btn-sm btn-success" title="Activar/Verificar">
+                  <i class="bi bi-check2-circle"></i>
+                </button>
+              </form>
+              {% endif %}
+
+              <form method="post" action="{{ url_for('admin.harddelete_user', uid=u.id) }}" onsubmit="return confirmHard(this)">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button class="btn btn-sm btn-danger" title="Eliminar definitivamente">
+                  <i class="bi bi-trash"></i>
+                </button>
+              </form>
+
+              <form method="post" action="{{ url_for('admin.change_role', uid=u.id) }}" class="d-flex gap-1">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <select name="role" class="form-select form-select-sm">
+                  <option value="user" {% if u.role=='user' %}selected{% endif %}>user</option>
+                  <option value="admin" {% if u.role=='admin' %}selected{% endif %}>admin</option>
+                  <option value="superadmin" {% if u.role=='superadmin' %}selected{% endif %}>superadmin</option>
+                </select>
+                <button class="btn btn-sm btn-outline-primary" title="Cambiar rol">
+                  <i class="bi bi-arrow-repeat"></i>
+                </button>
+              </form>
             {% endif %}
           </td>
         </tr>
-        {% endfor %}
+      {% endfor %}
       </tbody>
     </table>
   </div>
@@ -91,10 +114,17 @@
 
 {% block scripts %}
 <script>
-  new DataTable('#dt_users');
+  try { new DataTable('#dt_users'); } catch(e) {}
+
   function confirmSoft(form){
     event.preventDefault();
-    Swal.fire({title:'¿Mover a papelera?', text:'El usuario no podrá acceder.', icon:'warning', showCancelButton:true})
+    Swal.fire({title:'¿Mover a papelera?', text:'Podrás restaurarlo más tarde.', icon:'warning', showCancelButton:true})
+      .then(r=>{ if(r.isConfirmed) form.submit(); });
+    return false;
+  }
+  function confirmHard(form){
+    event.preventDefault();
+    Swal.fire({title:'Eliminar definitivamente', text:'Esta acción no se puede deshacer.', icon:'error', showCancelButton:true, confirmButtonText:'Sí, eliminar'})
       .then(r=>{ if(r.isConfirmed) form.submit(); });
     return false;
   }
