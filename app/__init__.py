@@ -1,11 +1,12 @@
 import os
-from flask import Flask
+from flask import Flask, send_from_directory
 from dotenv import load_dotenv
 from werkzeug.middleware.proxy_fix import ProxyFix
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
 from flask_wtf.csrf import CSRFProtect
 from markupsafe import Markup, escape
+
 
 # --- Selección de .env según FLASK_CONFIG ---
 flask_config = os.getenv("FLASK_CONFIG", "DevConfig")
@@ -82,4 +83,11 @@ def create_app():
     app.register_blueprint(admin_bp, url_prefix="/admin")
     app.register_blueprint(auth_bp)
 
+    @app.route("/media/avatars/<path:filename>")
+    def media_avatars(filename):
+        upload_dir = app.config.get(
+            "AVATAR_UPLOAD_DIR",
+            os.path.join(app.static_folder, "uploads", "avatars")
+        )
+        return send_from_directory(upload_dir, filename)
     return app

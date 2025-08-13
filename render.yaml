@@ -1,0 +1,64 @@
+services:
+  - type: web
+    name: colwmv-web
+    env: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn "app:create_app()"
+    envVars:
+      - key: FLASK_CONFIG
+        value: ProdConfig
+      - key: SECRET_KEY
+        generateValue: true
+      - key: APP_BASE_URL
+        value: https://colwmv-web.onrender.com
+      - key: MAIL_ENABLED
+        value: "true"          # cámbialo a false si aún no configuras SMTP
+      - key: MAIL_FROM
+        value: comunidadcolombianawmv@gmail.com
+      - key: SMTP_HOST
+        value: smtp.gmail.com  # o tu proveedor
+      - key: SMTP_PORT
+        value: "587"
+      - key: SMTP_USER
+        sync: false            # agrega el valor real en el panel si prefieres
+      - key: "gqsk nhbs ragn isee"
+        sync: false            # idem, usa app password si es Gmail
+      - key: SMTP_USE_TLS
+        value: "true"
+      - key: SMTP_USE_SSL
+        value: "false"
+      - key: USE_PROXYFIX
+        value: "true"
+      - key: PROXYFIX_X_FOR
+        value: "1"
+      - key: PROXYFIX_X_PROTO
+        value: "1"
+      - key: PROXYFIX_X_HOST
+        value: "1"
+      - key: PROXYFIX_X_PORT
+        value: "1"
+      - key: PROXYFIX_X_PREFIX
+        value: "0"
+      # BD: inyecta la conexión de Postgres creada abajo
+      - key: DATABASE_URL
+        fromDatabase:
+          name: colwmv-db
+          property: connectionString
+      # Subidas persistentes (opción recomendada con Disk):
+      - key: AVATAR_UPLOAD_DIR
+        value: /var/data/uploads/avatars
+      - key: AVATAR_MAX_SIZE
+        value: "3145728"   # 3MB
+    disk:
+      name: uploads
+      mountPath: /var/data
+      sizeGB: 1
+    # Crea tablas tras desplegar (si no usas Alembic)
+    postDeployCommand: >
+      python -c "from app import create_app, db; app=create_app(); 
+      ctx=app.app_context(); ctx.push(); db.create_all(); print('DB ready')"
+
+databases:
+  - name: colwmv-db
+    plan: free

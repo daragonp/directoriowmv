@@ -78,7 +78,10 @@ def save_avatar(file_storage, user_id: int) -> Optional[str]:
     file_storage.save(abs_path)
 
     # URL pública (no usamos url_for aquí para no exigir contexto)
-    return f"/static/uploads/avatars/{new_name}"
+    #return f"/static/uploads/avatars/{new_name}"
+# ... dentro de save_avatar(...)
+    return f"/media/avatars/{new_name}"
+
 
 # -------------------------
 # Auditoría / logs
