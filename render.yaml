@@ -21,9 +21,9 @@ services:
       - key: SMTP_PORT
         value: "587"
       - key: SMTP_USER
-        sync: false            # agrega el valor real en el panel si prefieres
-      - key: "gqsk nhbs ragn isee"
-        sync: false            # idem, usa app password si es Gmail
+        sync: Comunidad Colombiana en Washington, Maryland y Virginia            # agrega el valor real en el panel si prefieres
+      - key: SMTP_PASSWORD
+        sync: "gqsk nhbs ragn isee"            # idem, usa app password si es Gmail
       - key: SMTP_USE_TLS
         value: "true"
       - key: SMTP_USE_SSL
