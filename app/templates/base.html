@@ -47,7 +47,7 @@
     </button>
     <a class="navbar-brand d-flex align-items-center gap-2" href="{{ url_for('main.index') }}">
       <img src="{{ APP_ICON_URL or url_for('static', filename='icon.svg') }}" alt="icon" style="width:28px;height:28px">
-      {{ APP_NAME }}
+      {{ APP_NAME }} COLOMBIANOS EN WMV
     </a>
     <div class="d-flex align-items-center gap-2">
       <button class="btn btn-sm btn-outline-secondary d-none d-lg-inline-flex" id="btnCollapse" title="Colapsar menú">
@@ -96,14 +96,8 @@
         <a class="nav-link {% if request.endpoint=='services.my_services' %}active{% endif %}" href="{{ url_for('services.my_services') }}">
           <span class="icon bi bi-collection"></span><span class="text-label">Mis servicios</span>
         </a>
-        <a class="nav-link {% if request.endpoint=='services.create_service' %}active{% endif %}" href="{{ url_for('services.create_service') }}">
-          <span class="icon bi bi-plus-square"></span><span class="text-label">Crear servicio</span>
-        </a>
         <a class="nav-link {% if request.endpoint=='classifieds.mine' %}active{% endif %}" href="{{ url_for('classifieds.mine') }}">
           <span class="icon bi bi-ticket-perforated"></span><span class="text-label">Mis clasificados</span>
-        </a>
-        <a class="nav-link {% if request.endpoint=='classifieds.create' %}active{% endif %}" href="{{ url_for('classifieds.create') }}">
-          <span class="icon bi bi-plus-circle"></span><span class="text-label">Crear clasificado</span>
         </a>
       {% endif %}
 
@@ -204,7 +198,7 @@ document.addEventListener('DOMContentLoaded', function(){
     if(!layout) return;
     if(v){ layout.classList.add('sidebar-collapsed'); }
     else { layout.classList.remove('sidebar-collapsed'); }
-    try{ localStorage.setItem('sidebar-collapsed', v ? '1' : '0'); }catch(e){}
+    try{ localStorage.setItem('sidebar-collapsed', v ? '1' : '1'); }catch(e){}
   }
   try{ setCollapsed(localStorage.getItem('sidebar-collapsed') === '0'); }catch(e){}
 
